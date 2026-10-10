@@ -24,7 +24,7 @@ import { getRegexRefreshCoordinator } from '../../../tauri/perf/regex-refresh-co
 const NS = 'dw2pc';
 const ROOT_ID = 'dw2-preset-console';
 const SETTINGS_ID = 'dw2-preset-console-settings';
-const VERSION = '0.4.2';
+const VERSION = '0.4.3';
 const STORAGE_KEY = 'dw2.preset.console.v2';
 const CATEGORIES = [
     { id: 'quick', label: '快捷' },
@@ -623,7 +623,7 @@ function refreshIfChanged() {
 function launcherMetrics() {
     // 44px is large enough to tap easily and less intrusive than the old 52px.
     const size = launcher?.offsetWidth || 44;
-    const edge = 8;
+    const edge = 0; // Flush to the viewport, like a true docked bubble.
     const top = innerWidth <= 650 ? 70 : 14;
     const bottom = innerWidth <= 650 ? 26 : 12;
     return { size, edge, top, bottom };
@@ -635,30 +635,43 @@ function boundLauncher(x, y) {
         y: Math.max(m.top, Math.min(y, innerHeight - m.size - m.bottom)),
     };
 }
+function dockSideForX(x, size = launcherMetrics().size) {
+    // Edges are dockable; the center third of the display stays freely draggable.
+    const band = Math.min(112, innerWidth * .29);
+    if (x <= band) return 'left';
+    if (innerWidth - x - size <= band) return 'right';
+    return null;
+}
 function placeLauncher() {
     const m = launcherMetrics();
-    const x = prefs.position?.x ?? (innerWidth - m.size - m.edge);
-    const y = prefs.position?.y ?? (innerHeight * 0.56);
-    const pos = boundLauncher(x,y);
+    const stored = prefs.position;
+    const x = stored?.side === 'left' ? 0
+        : stored?.side === 'right' ? innerWidth - m.size
+        : stored?.x ?? (innerWidth - m.size);
+    const y = stored?.y ?? (innerHeight * .56);
+    const pos = boundLauncher(x, y);
+    const detected = stored?.side || dockSideForX(pos.x, m.size);
+    if (detected) pos.x = detected === 'left' ? 0 : innerWidth - m.size;
     launcher.style.left = pos.x + 'px';
     launcher.style.top = pos.y + 'px';
+    if (!stored || stored.x !== pos.x || stored.y !== pos.y || stored.side !== detected) {
+        prefs.position = { x:pos.x, y:pos.y, side:detected };
+        savePreferences();
+    }
     return pos;
 }
 function snapLauncherIfNearEdge() {
-    // Middle-of-screen release stays where the user dropped it. Only when
-    // entering a near-edge band does the bubble gently settle against the side.
     const m = launcherMetrics();
-    let x = launcher.offsetLeft;
-    const zone = Math.min(75, innerWidth * .20);
-    if (x <= zone) x = m.edge;
-    else if (innerWidth - x - m.size <= zone) x = innerWidth - m.size - m.edge;
-    else return false;
+    const side = dockSideForX(launcher.offsetLeft, m.size);
+    if (!side) return false;
+    const x = side === 'left' ? 0 : innerWidth - m.size;
     launcher.classList.add('is-snapping');
     launcher.style.left = x + 'px';
-    prefs.position = { x, y: launcher.offsetTop };
+    prefs.position = { x, y: launcher.offsetTop, side };
     savePreferences();
     return true;
 }
+
 function placePanel() {
     if (!open) return;
     const rect = launcher.getBoundingClientRect();
@@ -677,15 +690,24 @@ function placePanel() {
     panel.style.top = top + 'px';
 }
 
-function changeAppearance(next) {
-    prefs.appearance = next === 'day' ? 'day' : 'night';
+function applyAppearance() {
     root.dataset.appearance = prefs.appearance;
-    themeButton.textContent = prefs.appearance === 'day' ? '☾' : '☀';
+    // Line icons, not OS emoji. The previous yellow sun looked out of place
+    // alongside the minimal bookshelf frosted-glass controls.
+    const icon = prefs.appearance === 'day'
+        ? '<path d="M20.8 14.4A8.2 8.2 0 0 1 9.6 3.2a8.2 8.2 0 1 0 11.2 11.2Z"/>'
+        : '<circle cx="12" cy="12" r="3.5"/><path d="M12 2v2.1M12 19.9V22M4.93 4.93l1.5 1.5m11.14 11.14 1.5 1.5M2 12h2.1M19.9 12H22M4.93 19.07l1.5-1.5M17.57 6.43l1.5-1.5"/>';
+    themeButton.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + icon + '</svg>';
     themeButton.title = prefs.appearance === 'day' ? '切换夜间模式' : '切换日间模式';
     themeButton.setAttribute('aria-label', themeButton.title);
     themeButton.setAttribute('aria-pressed', String(prefs.appearance === 'day'));
+}
+function changeAppearance(next) {
+    prefs.appearance = next === 'day' ? 'day' : 'night';
+    applyAppearance();
     savePreferences();
 }
+
 async function saveActivePreset() {
     if (working || !saveButton) return;
     // Settings are saved automatically when individual entries are toggled.
@@ -825,9 +847,48 @@ function mountSettingsPanel() {
     actions.append(button('管理扩展','settings-action',()=>{
         void openThirdPartyExtensionMenu();
     }));
+    actions.append(button('刷新酒馆','settings-action',() => {
+        if (window.confirm('重新加载 TT 酒馆？请先保存尚未保存的预设修改。')) {
+            window.location.reload();
+        }
+    }));
     content.append(actions);
     section.append(heading,content);
     host.append(section);
+}
+
+// The host's native "Manage Extensions" popup is created afresh each time.
+// Attach one unobtrusive reload control to its native toolbar, without
+// replacing or modifying the popup's own Update/Sort handlers.
+function mountManagerReloadButton() {
+    const toolbar = document.querySelector('.extensions_info > .extensions_toolbar');
+    if (!toolbar || toolbar.querySelector('.dw2pc-manager-reload')) return;
+    const reload = button('↻ 刷新酒馆', 'manager-reload', () => {
+        if (window.confirm('重新加载 TT 酒馆？请先保存尚未保存的预设修改。')) {
+            window.location.reload();
+        }
+    });
+    reload.classList.add('menu_button','menu_button_icon');
+    toolbar.append(reload);
+}
+function watchExtensionManager() {
+    mountManagerReloadButton();
+    if (typeof MutationObserver !== 'function') return;
+    const observer = new MutationObserver((records) => {
+        for (const record of records) {
+            for (const entry of record.addedNodes) {
+                if (entry.nodeType !== 1) continue;
+                if (entry.matches?.('.extensions_info') ||
+                    entry.querySelector?.('.extensions_info') ||
+                    entry.matches?.('.extensions_toolbar') ||
+                    entry.querySelector?.('.extensions_toolbar')) {
+                    mountManagerReloadButton();
+                    return;
+                }
+            }
+        }
+    });
+    observer.observe(document.body,{childList:true,subtree:true});
 }
 
 function build() {
@@ -855,10 +916,7 @@ function build() {
     themeButton = button('', 'theme', () => changeAppearance(prefs.appearance === 'day' ? 'night' : 'day'));
     headActions.append(themeButton, button('×', 'close', () => showPanel(false), '关闭'));
     head.append(headings, headActions);
-    themeButton.textContent = prefs.appearance === 'day' ? '☾' : '☀';
-    themeButton.title = prefs.appearance === 'day' ? '切换夜间模式' : '切换日间模式';
-    themeButton.setAttribute('aria-label', themeButton.title);
-    themeButton.setAttribute('aria-pressed', String(prefs.appearance === 'day'));
+    applyAppearance();
     panel.append(head);
 
     tabBar = node('nav', 'tabs');
@@ -886,7 +944,7 @@ function build() {
     panel.append(listArea);
 
     const foot = node('footer', 'footer');
-    foot.append(node('span', '', 'DW2 · CONTROL  /  v0.4.2'));
+    foot.append(node('span', '', 'DW2 · CONTROL  /  v0.4.3'));
     const footActions = node('div', 'footer-actions');
     footActions.append(button('⟳ 刷新', 'refresh', () => render(), '重新读取当前状态'));
     saveButton = button('保存预设', 'save-preset', () => void saveActivePreset(), '执行 TT 原生「更新预设」操作');
@@ -943,7 +1001,7 @@ function build() {
         dragFrame = 0;
         if (didDrag) {
             moveLauncher(e.clientX, e.clientY);
-            prefs.position = { x: launcher.offsetLeft, y: launcher.offsetTop };
+            prefs.position = { x: launcher.offsetLeft, y: launcher.offsetTop, side: null };
             if (!snapLauncherIfNearEdge()) savePreferences();
         }
         drag = null;
@@ -980,6 +1038,7 @@ function build() {
     refreshEvents.forEach(type => eventSource.on(type, () => setTimeout(refreshIfChanged, 400)));
     setInterval(refreshIfChanged, 1600);
     mountSettingsPanel();
+    watchExtensionManager();
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build, { once: true });
