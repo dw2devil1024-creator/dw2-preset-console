@@ -1,9 +1,13 @@
-/* DW2 · Preset Console v0.4.5
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+
+/* DW2 · Preset Console v0.4.6
  * Standalone stylesheet. Glass tokens translated from DW2 · Story Archive's
  * v1.6.1 folder/sort popovers; intentionally not coupled to Tavern themes.
  * Compact layouts, quiet borders, warm charcoal and water-blue glass details.
  */
 #dw2-preset-console {
+  --dw2pc-font-zh:'Noto Serif SC','Source Han Serif SC','Noto Serif CJK SC','Songti SC','STSong',serif;
+  --dw2pc-font-en:'Playfair Display',Georgia,'Times New Roman',serif;
   --dw2pc-text:rgba(249,247,244,.95);
   --dw2pc-muted:rgba(218,220,224,.64);
   --dw2pc-line:rgba(196,220,232,.16);
@@ -17,7 +21,7 @@
   width:0!important;
   height:0!important;
   pointer-events:none;
-  font-family:'Noto Serif SC','Songti SC','STSong',serif!important;
+  font-family:var(--dw2pc-font-zh)!important;
   color:var(--dw2pc-text)!important;
   -webkit-font-smoothing:antialiased;
 }
@@ -44,7 +48,7 @@
   border:1px solid rgba(230,238,246,.47)!important;
   border-radius:50%!important;
   color:#fff!important;
-  font:27px/1 Georgia,serif!important;
+  font:27px/1 var(--dw2pc-font-zh)!important;
   background:linear-gradient(145deg,rgba(190,207,219,.78) 0%,rgba(168,183,204,.70) 52%,rgba(211,197,209,.78) 100%)!important;
   box-shadow:0 6px 18px rgba(0,0,0,.19),inset 0 1px 1px rgba(255,255,255,.45)!important;
   backdrop-filter:blur(15px) saturate(106%);
@@ -96,14 +100,14 @@
 }
 #dw2-preset-console .dw2pc-eyebrow{
   color:rgba(202,220,231,.60);
-  font:9px/1.5 Georgia,serif!important;
+  font:9px/1.5 var(--dw2pc-font-en)!important;
   font-weight:400;
   letter-spacing:.20em;
 }
 #dw2-preset-console .dw2pc-title{
   margin:3px 0 2px;
   color:#faf8f5;
-  font:23px/1.3 Georgia,serif!important;
+  font:23px/1.3 var(--dw2pc-font-en)!important;
   letter-spacing:.013em;
 }
 #dw2-preset-console .dw2pc-source-status{
@@ -212,7 +216,7 @@
   padding:9px 14px max(9px,env(safe-area-inset-bottom,0px));
   border-top:1px solid rgba(196,220,232,.10);
   color:var(--dw2pc-muted);
-  font:9px/1.4 Georgia,serif!important;
+  font:9px/1.4 var(--dw2pc-font-en)!important;
   letter-spacing:.075em;
 }
 #dw2-preset-console .dw2pc-footer-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;}
@@ -326,7 +330,7 @@
   border-radius:999px!important;
   background:rgba(255,255,255,.035)!important;
   color:rgba(232,232,236,.48)!important;
-  font:600 10px/1.25 Arial,sans-serif!important;
+  font:600 10px/1.25 var(--dw2pc-font-zh)!important;
   cursor:pointer;
 }
 #dw2-preset-console .dw2pc-switch.is-on{
@@ -400,7 +404,7 @@
   letter-spacing:.035em;
 }
 #dw2-preset-console .dw2pc-q-intro-meta{
-  font:9px/1.3 Georgia,serif!important;
+  font:9px/1.3 var(--dw2pc-font-en)!important;
   letter-spacing:.16em;
   color:rgba(189,217,230,.52);
 }
@@ -620,4 +624,18 @@
   color:inherit;
   border-color:rgba(194,219,231,.28)!important;
   background:linear-gradient(90deg,rgba(169,199,213,.075),rgba(255,255,255,.02))!important;
+}
+
+/* Unified SC on both iOS and Android also covers TT's own extension pane.
+   Do not override .fa-solid icons or inline SVG glyphs. */
+#dw2-preset-console-settings {
+  --dw2pc-font-zh:'Noto Serif SC','Source Han Serif SC','Noto Serif CJK SC','Songti SC','STSong',serif;
+  --dw2pc-font-en:'Playfair Display',Georgia,'Times New Roman',serif;
+  font-family:var(--dw2pc-font-zh)!important;
+}
+#dw2-preset-console-settings :is(.dw2pc-settings-heading-text,.dw2pc-settings-title,.dw2pc-settings-content,.dw2pc-settings-hint,.dw2pc-settings-action,.dw2pc-settings-toggle){
+  font-family:var(--dw2pc-font-zh)!important;
+}
+#dw2-preset-console-settings .dw2pc-settings-byline{
+  font-family:var(--dw2pc-font-en)!important;
 }
