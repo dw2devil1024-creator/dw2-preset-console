@@ -355,10 +355,12 @@ function quickOptions(card, items) {
         ({ label, name, item: quickResolve(name, items) }));
 }
 function quickOpenGroup(card, items) {
-    const lookupName = card.group || card.options?.[0]?.[1] || card.examples?.[0]?.[1];
+    const lookupName = card.options?.[0]?.[1] || card.examples?.[0]?.[1];
     const anchor = lookupName ? quickResolve(lookupName, items) : null;
     const data = presetGroupData();
-    const group = data.groups.find(g => g.id === anchor?.groupId);
+    const group = card.group
+        ? data.groups.find(g => g.name === card.group)
+        : data.groups.find(g => g.id === anchor?.groupId);
     if (!group) {
         toast('当前预设没有对应的原始分组，请使用「全部」查看。','warning');
         tab = 'prompts'; filter = ''; render();
