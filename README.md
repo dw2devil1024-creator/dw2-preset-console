@@ -1,12 +1,12 @@
 # DW2 · Preset Console
 
-> **联合制作｜沈先生 × 阿黛**
+> **制作署名｜S.A. · DW2**
 >
-> 属于我们的 DW2 小作品。设计、迭代、实机测试与源码维护共同完成。
+> 一个独立的 DW2 系列 TauriTavern 插件项目。
 
 专为 TauriTavern（TT 酒馆）设计的独立第三方扩展。兼容《织界》预设的原始分组和柏宝箱的正则子分组，与 DW2 · Story Archive 书架互不影响。
 
-**当前版本：v0.4.5（双人联合署名版）**
+**当前版本：v0.4.6（匿名联合署名与跨端字体版）**
 
 ## 升级
 
@@ -16,16 +16,24 @@
 
 `https://github.com/dw2devil1024-creator/dw2-preset-console`
 
-无需重新导入或替换《织界》预设；原来的书架和正则内容也不会被修改。此次更换 JS 入口版本标识（`index.js?v=0.4.5`），以降低 iOS WebView 复用旧模块缓存的概率。
+无需重新导入或替换《织界》预设；原来的书架和正则内容也不会被修改。此次更换 JS 入口版本标识（`index.js?v=0.4.6`），以降低 iOS WebView 复用旧模块缓存的概率。
 
 
 
 
+
+## v0.4.6 · 匿名署名 / iOS、Android 字体统一
+
+- 公开署名统一为 **S.A. · DW2**，同时更新 `manifest.json`、TT 扩展列表的折叠标题副行、GitHub README 和源码注释。仓库名称、存储键、已有功能、书架插件均保持不变。
+- 在 `style.css` 顶端通过 Google Fonts 引入 `Noto Serif SC`（400/500/600/700）作为中文主字体，`Playfair Display`（400/500/600/700）作为英文标题字体，覆盖插件面板及扩展设置里的文字，统一 iOS / Android 的字体来源。
+- 原有 `Georgia`、`Arial` 显式字体指定替换为共用的字体变量，保留系统字体回退以应对网络不可用；保留 Font Awesome 图标字体和 SVG 图标，不用全局强制覆盖。
+- 由于字体使用远程 Google Fonts，首次加载或网络受限时可能出现字体回退，不能承诺离线状态下完全相同；在 TT 的 iOS / Android 设备上仍需实测。
+- 这次更新不会清除 GitHub 历史提交中曾出现过的旧署名。想做到彻底匿名需要单独处理旧提交和历史记录。
 
 ## v0.4.5 · 双人署名
 
 - 插件版本升级至 `0.4.5`，同步 JS 与 CSS 入口版本参数，减少 TT / iOS 缓存旧资源的概率。
-- 在插件 `manifest.json` 的 `author` 字段、扩展设置页以及 GitHub README 中统一显示 **沈先生 × 阿黛**。
+- 在插件 `manifest.json` 的 `author` 字段、扩展设置页以及 GitHub README 中统一显示 **S.A. · DW2**。
 - 保留项目名称 DW2 · Preset Console，不更改 GitHub 仓库所有者、插件安装地址、存储键或预设／正则逻辑。
 - 当前版本仍待 TT 实机确认署名和版本显示。
 
