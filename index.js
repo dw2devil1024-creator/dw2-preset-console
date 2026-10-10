@@ -24,7 +24,7 @@ import { getRegexRefreshCoordinator } from '../../../tauri/perf/regex-refresh-co
 const NS = 'dw2pc';
 const ROOT_ID = 'dw2-preset-console';
 const SETTINGS_ID = 'dw2-preset-console-settings';
-const VERSION = '0.4.1';
+const VERSION = '0.4.2';
 const STORAGE_KEY = 'dw2.preset.console.v2';
 const CATEGORIES = [
     { id: 'quick', label: '快捷' },
@@ -37,7 +37,7 @@ let prefs = loadPreferences();
 let tab = 'quick';
 
 let filter = '';
-let root, launcher, panel, listArea, searchField, sourceStatus, tabBar;
+let root, launcher, panel, listArea, searchField, sourceStatus, tabBar, saveButton, themeButton;
 let open = false;
 let working = false;
 let lastSignature = '';
@@ -54,9 +54,10 @@ function loadPreferences() {
             position: data.position && Number.isFinite(data.position.x) && Number.isFinite(data.position.y) ? data.position : null,
             byPreset: data.byPreset && typeof data.byPreset === 'object' ? data.byPreset : {},
             floatingVisible: data.floatingVisible !== false,
+            appearance: data.appearance === 'day' ? 'day' : 'night',
         };
     } catch (_) {
-        return { position: null, byPreset: {}, floatingVisible: true };
+        return { position: null, byPreset: {}, floatingVisible: true, appearance: 'night' };
     }
 }
 
@@ -386,19 +387,16 @@ function showGroups() {
                 content.hidden = false;
             }
             header.setAttribute('aria-expanded', String(!visible));
-            arrow.textContent = visible ? '⌄' : '⌃';
             settings.groupCollapsed[group.id] = visible;
             savePreferences();
         });
         const name = node('span', 'group-heading', group.name);
         const count = node('span', 'group-count', String(groupItems.length));
-        const arrow = node('span', 'group-arrow', '⌄');
-        header.append(name, count, arrow);
+        header.append(name, count);
         wrap.append(header);
         const content = node('div', 'group-body');
         const collapsed = !filter && (settings.groupCollapsed[group.id] ?? (typeof group.collapsed === 'boolean' ? group.collapsed : !group.defaultOpen));
         content.hidden = collapsed;
-        arrow.textContent = collapsed ? '⌄' : '⌃';
         header.setAttribute('aria-expanded', String(!collapsed));
         if (!collapsed) groupItems.forEach(x => content.append(itemRow(x, true)));
         wrap.append(content);
@@ -551,13 +549,10 @@ function showRegex() {
             else {drawContents();content.hidden=false;}
             settings.regexCollapsed[source.id]=visible;
             title.setAttribute('aria-expanded',String(!visible));
-            arrow.textContent=visible?'⌄':'⌃';
             savePreferences();
         });
         title.append(node('span','group-heading',source.name));
         title.append(node('span','group-count',scripts.filter(x=>x.enabled).length+' / '+scripts.length+' 已启用'));
-        const arrow = node('span','group-arrow',expanded?'⌃':'⌄');
-        title.append(arrow);
         title.setAttribute('aria-expanded',String(expanded));
         section.append(title,content);
         function drawContents(){
@@ -582,14 +577,11 @@ function showRegex() {
                     if(wasOpen){body.hidden=true;body.replaceChildren();}
                     else {appendRows(members,body);body.hidden=false;}
                     settings.regexSubgroupCollapsed[prefKey]=wasOpen;
-                    chevron.textContent=wasOpen?'⌄':'⌃';
                     head.setAttribute('aria-expanded',String(!wasOpen));
                     savePreferences();
                 });
                 head.append(node('span','regex-subgroup-name',group.name));
                 head.append(node('span','regex-subgroup-count',String(members.length)));
-                const chevron=node('span','regex-subgroup-arrow',collapsed?'⌄':'⌃');
-                head.append(chevron);
                 head.setAttribute('aria-expanded',String(!collapsed));
                 wrap.append(head,body);
                 if(!collapsed)appendRows(members,body);
@@ -628,29 +620,107 @@ function refreshIfChanged() {
     if (signature !== lastSignature) render();
 }
 
-function placeLauncher() {
-    const size = 52;
-    const margin = 12;
-    const x = prefs.position?.x ?? Math.max(margin, innerWidth - size - 22);
-    const y = prefs.position?.y ?? Math.max(margin, innerHeight * 0.56);
-    const left = Math.min(Math.max(x, margin), Math.max(margin, innerWidth - size - margin));
-    const top = Math.min(Math.max(y, margin), Math.max(margin, innerHeight - size - margin));
-    launcher.style.left = left + 'px';
-    launcher.style.top = top + 'px';
-    return { x: left, y: top };
+function launcherMetrics() {
+    // 44px is large enough to tap easily and less intrusive than the old 52px.
+    const size = launcher?.offsetWidth || 44;
+    const edge = 8;
+    const top = innerWidth <= 650 ? 70 : 14;
+    const bottom = innerWidth <= 650 ? 26 : 12;
+    return { size, edge, top, bottom };
 }
-
+function boundLauncher(x, y) {
+    const m = launcherMetrics();
+    return {
+        x: Math.max(m.edge, Math.min(x, innerWidth - m.size - m.edge)),
+        y: Math.max(m.top, Math.min(y, innerHeight - m.size - m.bottom)),
+    };
+}
+function placeLauncher() {
+    const m = launcherMetrics();
+    const x = prefs.position?.x ?? (innerWidth - m.size - m.edge);
+    const y = prefs.position?.y ?? (innerHeight * 0.56);
+    const pos = boundLauncher(x,y);
+    launcher.style.left = pos.x + 'px';
+    launcher.style.top = pos.y + 'px';
+    return pos;
+}
+function snapLauncherIfNearEdge() {
+    // Middle-of-screen release stays where the user dropped it. Only when
+    // entering a near-edge band does the bubble gently settle against the side.
+    const m = launcherMetrics();
+    let x = launcher.offsetLeft;
+    const zone = Math.min(75, innerWidth * .20);
+    if (x <= zone) x = m.edge;
+    else if (innerWidth - x - m.size <= zone) x = innerWidth - m.size - m.edge;
+    else return false;
+    launcher.classList.add('is-snapping');
+    launcher.style.left = x + 'px';
+    prefs.position = { x, y: launcher.offsetTop };
+    savePreferences();
+    return true;
+}
 function placePanel() {
     if (!open) return;
     const rect = launcher.getBoundingClientRect();
     const w = panel.offsetWidth, h = panel.offsetHeight;
+    // iOS's safe-area env can be zero in standalone WebViews. Keep a real
+    // 70px top inset in portrait mobile so the status bar is never overlapped.
+    const topGuard = innerWidth <= 650 ? 70 : 16;
+    const bottomGuard = innerWidth <= 650 ? 26 : 16;
+    const side = 10;
     let left = rect.left + rect.width - w;
     let top = rect.top - h - 12;
-    if (top < 10) top = rect.bottom + 12;
-    left = Math.max(10, Math.min(left, innerWidth - w - 10));
-    top = Math.max(10, Math.min(top, innerHeight - h - 10));
+    if (top < topGuard) top = rect.bottom + 12;
+    left = Math.max(side, Math.min(left, Math.max(side, innerWidth - w - side)));
+    top = Math.max(topGuard, Math.min(top, Math.max(topGuard, innerHeight - h - bottomGuard)));
     panel.style.left = left + 'px';
     panel.style.top = top + 'px';
+}
+
+function changeAppearance(next) {
+    prefs.appearance = next === 'day' ? 'day' : 'night';
+    root.dataset.appearance = prefs.appearance;
+    themeButton.textContent = prefs.appearance === 'day' ? '☾' : '☀';
+    themeButton.title = prefs.appearance === 'day' ? '切换夜间模式' : '切换日间模式';
+    themeButton.setAttribute('aria-label', themeButton.title);
+    themeButton.setAttribute('aria-pressed', String(prefs.appearance === 'day'));
+    savePreferences();
+}
+async function saveActivePreset() {
+    if (working || !saveButton) return;
+    // Settings are saved automatically when individual entries are toggled.
+    // The user explicitly requested the *native Save/Update Preset* action,
+    // which is separate from saving service settings or refreshing this UI.
+    if (getCurrentPresetAPI() !== 'openai') {
+        toast('当前不是 Chat Completion 预设，不能执行此保存操作。','warning');
+        return;
+    }
+    const nativeSave = document.getElementById('update_oai_preset');
+    const activeName = getCurrentPresetName();
+    if (!nativeSave || nativeSave.disabled || !activeName || !promptManager?.activeCharacter) {
+        toast('TT 原生「更新预设」按钮尚未就绪。请在 TT 预设设置中检查。','warning');
+        return;
+    }
+    const manager = getPresetManager('openai');
+    const selected = manager?.getSelectedPresetName?.();
+    if (selected && selected !== activeName) {
+        toast('当前预设名称与 TT 选中项不同，已取消保存以免写错预设。','warning');
+        return;
+    }
+    saveButton.disabled = true;
+    saveButton.textContent = '保存中…';
+    try {
+        // Invoke the exact action bound by TT itself; the native save handler
+        // performs /api/presets/save with the correct filtered preset payload.
+        // click() does not await that handler, so do NOT claim success here.
+        nativeSave.click();
+        toast('已调用 TT 原生「更新预设」，请以 TT 的保存结果提示为准。','info');
+    } catch (error) {
+        toast('无法调用 TT 保存：'+(error.message||error),'error');
+    } finally {
+        saveButton.disabled = false;
+        saveButton.textContent = '保存预设';
+    }
 }
 
 function showPanel(yes) {
@@ -763,6 +833,7 @@ function mountSettingsPanel() {
 function build() {
     root = node('div', 'root');
     root.id = ROOT_ID;
+    root.dataset.appearance = prefs.appearance;
     launcher = button('✧', 'launcher', e => {
         if (e.detail === 0) showPanel(!open); // keyboard / assistive input
     }, 'DW2 · Control');
@@ -780,7 +851,14 @@ function build() {
     headings.append(node('div', 'title', 'Preset Console'));
     sourceStatus = node('div', 'source-status');
     headings.append(sourceStatus);
-    head.append(headings, button('×', 'close', () => showPanel(false), '关闭'));
+    const headActions = node('div', 'header-actions');
+    themeButton = button('', 'theme', () => changeAppearance(prefs.appearance === 'day' ? 'night' : 'day'));
+    headActions.append(themeButton, button('×', 'close', () => showPanel(false), '关闭'));
+    head.append(headings, headActions);
+    themeButton.textContent = prefs.appearance === 'day' ? '☾' : '☀';
+    themeButton.title = prefs.appearance === 'day' ? '切换夜间模式' : '切换日间模式';
+    themeButton.setAttribute('aria-label', themeButton.title);
+    themeButton.setAttribute('aria-pressed', String(prefs.appearance === 'day'));
     panel.append(head);
 
     tabBar = node('nav', 'tabs');
@@ -808,8 +886,12 @@ function build() {
     panel.append(listArea);
 
     const foot = node('footer', 'footer');
-    foot.append(node('span', '', 'DW2 · CONTROL  /  v0.4.1'));
-    foot.append(button('⟳ 同步', 'refresh', () => render(), '重新读取当前状态'));
+    foot.append(node('span', '', 'DW2 · CONTROL  /  v0.4.2'));
+    const footActions = node('div', 'footer-actions');
+    footActions.append(button('⟳ 刷新', 'refresh', () => render(), '重新读取当前状态'));
+    saveButton = button('保存预设', 'save-preset', () => void saveActivePreset(), '执行 TT 原生「更新预设」操作');
+    footActions.append(saveButton);
+    foot.append(footActions);
     panel.append(foot);
     root.append(panel);
     document.body.append(root);
@@ -823,13 +905,15 @@ function build() {
         if (!drag) return;
         const dx = clientX - drag.startX;
         const dy = clientY - drag.startY;
-        launcher.style.left = Math.max(12, Math.min(drag.left + dx, innerWidth - launcher.offsetWidth - 12)) + 'px';
-        launcher.style.top = Math.max(12, Math.min(drag.top + dy, innerHeight - launcher.offsetHeight - 12)) + 'px';
+        const pos = boundLauncher(drag.left + dx, drag.top + dy);
+        launcher.style.left = pos.x + 'px';
+        launcher.style.top = pos.y + 'px';
         if (open) placePanel();
     }
 
     launcher.addEventListener('pointerdown', e => {
         if (e.button !== 0 || drag) return;
+        launcher.classList.remove('is-snapping');
         drag = {
             id: e.pointerId,
             startX: e.clientX, startY: e.clientY,
@@ -860,7 +944,7 @@ function build() {
         if (didDrag) {
             moveLauncher(e.clientX, e.clientY);
             prefs.position = { x: launcher.offsetLeft, y: launcher.offsetTop };
-            savePreferences();
+            if (!snapLauncherIfNearEdge()) savePreferences();
         }
         drag = null;
         dragTarget = null;
