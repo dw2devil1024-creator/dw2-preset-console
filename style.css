@@ -1,640 +1,505 @@
-/* DW2 · Preset Console | Namespaced, light/glass, responsive */
+/* DW2 · Preset Console v0.4.1
+ * Standalone stylesheet. Glass tokens translated from DW2 · Story Archive's
+ * v1.6.1 folder/sort popovers; intentionally not coupled to Tavern themes.
+ * Compact layouts, quiet borders, warm charcoal and water-blue glass details.
+ */
 #dw2-preset-console {
-    --dw2pc-text: #f8f7f9;
-    --dw2pc-muted: #c7c6d2;
-    --dw2pc-pink: #ffe4e9;
-    --dw2pc-blue: #dbeefa;
-    position: fixed !important;
-    z-index: 2147483500 !important;
-    inset: 0;
-    width: 0 !important;
-    height: 0 !important;
-    font-family: "Noto Serif SC", "Songti SC", "STSong", serif !important;
-    color: var(--dw2pc-text) !important;
-    pointer-events: none;
-}
-#dw2-preset-console *, #dw2-preset-console *::before, #dw2-preset-console *::after {
-    box-sizing: border-box !important;
-}
-#dw2-preset-console button, #dw2-preset-console input, #dw2-preset-console select {
-    font-family: inherit !important;
-    letter-spacing: normal;
-}
-#dw2-preset-console .dw2pc-launcher {
-    pointer-events: auto !important;
-    position: fixed !important;
-    display: grid !important;
-    place-items: center !important;
-    width: 52px !important;
-    height: 52px !important;
-    padding: 0 !important;
-    border: 1px solid rgba(255, 255, 255, .62) !important;
-    border-radius: 50% !important;
-    color: #ffffff !important;
-    font-family: Georgia, serif !important;
-    font-size: 32px !important;
-    line-height: 1 !important;
-    background: linear-gradient(135deg, rgba(216,226,239,.83), rgba(227,196,207,.73)) !important;
-    box-shadow: 0 7px 28px rgba(32,28,50,.22), inset 0 0 16px rgba(255,255,255,.35) !important;
-    backdrop-filter: blur(18px) saturate(120%);
-    -webkit-backdrop-filter: blur(18px) saturate(120%);
-    cursor: grab;
-    touch-action: none !important;
-    -webkit-tap-highlight-color: transparent !important;
-    transition: transform .13s ease-out, box-shadow .15s ease-out;
-    user-select: none;
-    -webkit-user-select: none;
-}
-#dw2-preset-console .dw2pc-launcher:active {
-    cursor: grabbing;
-    transform: scale(.965);
-}
-#dw2-preset-console .dw2pc-regex-group .dw2pc-group-heading { font-size: 12px; }
-#dw2-preset-console .dw2pc-regex-group .dw2pc-group-count {
-    flex: 0 0 auto;
-    font-variant-numeric: tabular-nums;
-    font-size: 10px;
-    opacity: .85;
-}
-#dw2-preset-console .dw2pc-regex-group .dw2pc-group-body {
-    padding: 3px 8px 10px;
-}
-#dw2-preset-console .dw2pc-regex-group .dw2pc-empty { padding: 22px 8px; }
-#dw2-preset-console .dw2pc-regex-permission {
-    padding: 9px;
-    margin: 5px 0 7px;
-    border-left: 2px solid rgba(255,218,229,.58);
-    background: rgba(255,255,255,.04);
-}
-#dw2-preset-console .dw2pc-launcher:focus-visible {
-    outline: 2px solid #f9d7e4 !important;
-    outline-offset: 3px !important;
-}
-#dw2-preset-console .dw2pc-panel {
-    position: fixed !important;
-    display: flex !important;
-    flex-direction: column !important;
-    pointer-events: auto !important;
-    width: min(370px, calc(100vw - 20px)) !important;
-    height: min(610px, calc(100dvh - 25px)) !important;
-    max-height: calc(100dvh - 25px) !important;
-    overflow: hidden !important;
-    border: 1px solid rgba(255,255,255,.27) !important;
-    border-radius: 12px !important;
-    background: linear-gradient(158deg, rgba(66,75,94,.94), rgba(41,47,63,.96) 56%, rgba(57,49,66,.96)) !important;
-    color: var(--dw2pc-text) !important;
-    box-shadow: 0 20px 65px rgba(10,13,25,.36) !important;
-    backdrop-filter: blur(24px) saturate(128%);
-    -webkit-backdrop-filter: blur(24px) saturate(128%);
-    animation: dw2pc-arrive .16s ease-out both;
-}
-#dw2-preset-console .dw2pc-panel[hidden] { display: none !important; }
-@keyframes dw2pc-arrive {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-#dw2-preset-console .dw2pc-header {
-    display: flex;
-    flex: 0 0 auto;
-    align-items: flex-start;
-    justify-content: space-between;
-    padding: 20px 19px 15px;
-    border-bottom: 1px solid rgba(255,255,255,.14);
-}
-#dw2-preset-console .dw2pc-eyebrow {
-    color: var(--dw2pc-pink);
-    font-family: Georgia, serif !important;
-    font-size: 9px;
-    letter-spacing: .24em;
-    font-weight: 500;
-}
-#dw2-preset-console .dw2pc-title {
-    margin: 6px 0 3px;
-    color: #fff;
-    font-family: Georgia, serif !important;
-    font-size: 24px;
-    letter-spacing: .01em;
-}
-#dw2-preset-console .dw2pc-source-status {
-    max-width: 260px;
-    overflow: hidden;
-    color: var(--dw2pc-muted);
-    font-size: 11px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-#dw2-preset-console .dw2pc-close {
-    width: 26px;
-    height: 26px;
-    padding: 0;
-    border: none !important;
-    background: transparent !important;
-    color: #f8e4e8 !important;
-    font-size: 25px;
-    cursor: pointer;
-}
-#dw2-preset-console .dw2pc-tabs {
-    display: grid;
-    grid-template-columns: repeat(5,minmax(0,1fr));
-    gap: 3px;
-    padding: 12px 15px 8px;
-    flex: 0 0 auto;
-}
-#dw2-preset-console .dw2pc-tab {
-    padding: 8px 2px !important;
-    min-width: 0;
-    border: 1px solid transparent !important;
-    border-radius: 5px !important;
-    background: transparent !important;
-    color: var(--dw2pc-muted) !important;
-    font-size: 12px !important;
-    cursor: pointer;
-}
-#dw2-preset-console .dw2pc-tab.is-active {
-    background: rgba(255,229,237,.14) !important;
-    border-color: rgba(255,225,237,.29) !important;
-    color: #fff !important;
-}
-#dw2-preset-console .dw2pc-search-wrap { padding: 0 15px 8px; flex: 0 0 auto; }
-#dw2-preset-console .dw2pc-search {
-    width: 100% !important;
-    height: 34px !important;
-    padding: 6px 12px !important;
-    border: 1px solid rgba(255,255,255,.19) !important;
-    border-radius: 4px !important;
-    background: rgba(255,255,255,.065) !important;
-    box-shadow: none !important;
-    color: #fff !important;
-    font-size: 12px !important;
-}
-#dw2-preset-console .dw2pc-search::placeholder { color: rgba(237,230,240,.65); }
-#dw2-preset-console .dw2pc-search[hidden] { display: none !important; }
-#dw2-preset-console .dw2pc-list {
-    overflow-y: auto !important;
-    overscroll-behavior: contain;
-    flex: 1 1 auto;
-    min-height: 0;
-    padding: 0 15px 14px;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,.24) transparent;
-}
-#dw2-preset-console .dw2pc-group-title {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    margin: 14px 0 6px;
-    padding: 0 1px 7px;
-    border-bottom: 1px solid rgba(255,255,255,.13);
-    color: #ffedf2;
-    font-size: 12px;
-    letter-spacing: .06em;
-}
-#dw2-preset-console .dw2pc-group-count { color: var(--dw2pc-muted); font-size: 10px; }
-#dw2-preset-console .dw2pc-item {
-    display: flex;
-    gap: 7px;
-    justify-content: space-between;
-    align-items: center;
-    min-height: 45px;
-    padding: 8px 4px;
-    border-bottom: 1px solid rgba(255,255,255,.065);
-}
-#dw2-preset-console .dw2pc-item-detail { flex: 1 1 auto; min-width: 0; }
-#dw2-preset-console .dw2pc-item-name {
-    color: #fdfbfc;
-    font-size: 12px;
-    line-height: 1.5;
-    white-space: normal;
-    word-break: break-word;
-}
-#dw2-preset-console .dw2pc-item-source { color: var(--dw2pc-muted); font-size: 9px; }
-#dw2-preset-console .dw2pc-favorite {
-    flex: 0 0 25px;
-    min-width: 0 !important;
-    padding: 2px !important;
-    border: none !important;
-    color: #ffe2ea !important;
-    background: transparent !important;
-    font-size: 19px !important;
-    cursor: pointer;
-}
-#dw2-preset-console .dw2pc-switch {
-    flex: 0 0 43px;
-    min-height: 25px;
-    padding: 3px 4px !important;
-    border: 1px solid rgba(255,255,255,.24) !important;
-    border-radius: 20px !important;
-    background: rgba(255,255,255,.06) !important;
-    color: #d5d1d9 !important;
-    font-family: Arial,sans-serif !important;
-    font-size: 10px !important;
-    font-weight: 600;
-    cursor: pointer;
-}
-#dw2-preset-console .dw2pc-switch.is-on {
-    border-color: rgba(255,225,234,.55) !important;
-    color: #ffe7ef !important;
-    background: rgba(251,209,228,.18) !important;
-}
-#dw2-preset-console .dw2pc-switch:disabled { opacity: .5; cursor: wait; }
-#dw2-preset-console .dw2pc-empty {
-    padding: 38px 12px;
-    color: var(--dw2pc-muted);
-    font-size: 12px;
-    line-height: 1.9;
-    text-align: center;
-}
-#dw2-preset-console .dw2pc-help {
-    padding: 0 3px;
-    color: var(--dw2pc-muted);
-    font-size: 11px;
-    line-height: 1.85;
-}
-#dw2-preset-console .dw2pc-mode-field {
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-    padding: 10px 0;
-}
-#dw2-preset-console .dw2pc-mode-label {
-    font-size: 12px;
-    color: #ffe7f1;
-}
-#dw2-preset-console .dw2pc-mode-select {
-    width: 100%;
-    min-height: 38px;
-    padding: 7px 10px !important;
-    border: 1px solid rgba(255,255,255,.22) !important;
-    border-radius: 4px !important;
-    background: #515569 !important;
-    color: #fff !important;
-    font-size: 12px !important;
-}
-#dw2-preset-console .dw2pc-mode-actions {
-    display: grid;
-    grid-template-columns: repeat(2,minmax(0,1fr));
-    gap: 8px;
-    margin: 15px 0;
-}
-#dw2-preset-console .dw2pc-mode-button {
-    min-width: 0;
-    padding: 11px 5px !important;
-    border: 1px solid rgba(255,225,235,.4) !important;
-    border-radius: 5px !important;
-    background: rgba(255,229,237,.14) !important;
-    color: #ffe6ed !important;
-    font-size: 11px !important;
-    cursor: pointer;
-}
-#dw2-preset-console .dw2pc-footer {
-    display: flex;
-    flex: 0 0 auto;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 17px calc(10px + env(safe-area-inset-bottom, 0px) / 3);
-    border-top: 1px solid rgba(255,255,255,.13);
-    color: var(--dw2pc-muted);
-    font-family: Georgia,serif !important;
-    font-size: 10px;
-    letter-spacing: .08em;
-}
-#dw2-preset-console .dw2pc-refresh {
-    padding: 3px 0 !important;
-    border: none !important;
-    background: transparent !important;
-    color: var(--dw2pc-blue) !important;
-    font-size: 11px !important;
-    cursor: pointer;
-}
-@media (max-width: 500px) {
-    #dw2-preset-console .dw2pc-panel {
-        width: min(350px, calc(100vw - 20px)) !important;
-        height: min(580px, calc(100dvh - 30px)) !important;
-    }
-}
-@media (prefers-reduced-motion: reduce) {
-    #dw2-preset-console .dw2pc-panel { animation: none !important; }
-}
-
-/* Adaptive group hierarchy from the active preset metadata */
-#dw2-preset-console .dw2pc-group-section {
-    margin: 8px 0 10px;
-    border: 1px solid rgba(255,255,255,.10);
-    border-radius: 7px;
-    background: rgba(255,255,255,.035);
-    overflow: hidden;
-}
-#dw2-preset-console .dw2pc-group-expand {
-    width: 100% !important;
-    min-height: 43px;
-    padding: 10px 10px !important;
-    display: flex !important;
-    gap: 8px;
-    align-items: center;
-    border: 0 !important;
-    border-radius: 0 !important;
-    background: rgba(255,255,255,.055) !important;
-    color: #fff4f6 !important;
-    text-align: left !important;
-    font-size: 11px !important;
-    cursor: pointer;
-}
-#dw2-preset-console .dw2pc-group-heading {
-    flex: 1;
-    min-width: 0;
-    line-height: 1.7;
-    word-break: break-word;
-}
-#dw2-preset-console .dw2pc-group-arrow {
-    flex: 0 0 auto;
-    color: #fee3ea;
-    font-size: 15px;
-}
-#dw2-preset-console .dw2pc-group-body { padding: 0 8px; }
-#dw2-preset-console .dw2pc-group-body[hidden] { display: none !important; }
-#dw2-preset-console .dw2pc-item.is-protected { opacity: .82; }
-#dw2-preset-console .dw2pc-protected {
-    flex: 0 0 auto;
-    font-size: 10px;
-    color: #f0cfdc;
-}
-
-
-/* v0.2.2: mirrored regex subgroups and the extension-settings entry */
-#dw2-preset-console .dw2pc-launcher[hidden] { display: none !important; }
-#dw2-preset-console .dw2pc-regex-subgroup {
-    margin: 6px 0 8px;
-    border: 1px solid rgba(255,255,255,.11);
-    border-radius: 6px;
-    background: rgba(245,235,242,.035);
-    overflow: hidden;
-}
-#dw2-preset-console .dw2pc-regex-subgroup-header {
-    width: 100% !important;
-    display: flex !important;
-    align-items: center;
-    gap: 8px;
-    min-height: 38px;
-    padding: 7px 9px !important;
-    text-align: left !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    background: rgba(255,236,243,.07) !important;
-    color: #fff0f5 !important;
-    cursor: pointer;
-}
-#dw2-preset-console .dw2pc-regex-subgroup-name {
-    flex: 1;
-    min-width: 0;
-    font-size: 11px;
-    line-height: 1.6;
-    word-break: break-word;
-}
-#dw2-preset-console .dw2pc-regex-subgroup-count {
-    color: #d5c6d5;
-    font-size: 10px;
-    font-variant-numeric: tabular-nums;
-}
-#dw2-preset-console .dw2pc-regex-subgroup-arrow {
-    flex: 0 0 14px;
-    text-align: right;
-    color: #ffe2ed;
-    font-size: 14px;
-}
-#dw2-preset-console .dw2pc-regex-subgroup-body {
-    padding: 1px 7px 6px;
-}
-#dw2-preset-console .dw2pc-regex-subgroup-body[hidden] { display: none !important; }
-#dw2-preset-console-settings .dw2pc-settings-heading {
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-#dw2-preset-console-settings .dw2pc-settings-content {
-    padding: 8px 10px 12px;
-    color: var(--SmartThemeBodyColor,inherit);
-    background: transparent;
-}
-#dw2-preset-console-settings .dw2pc-settings-hint {
-    margin: 6px 0 12px;
-    font-size: 12px;
-    opacity: .78;
-    line-height: 1.6;
-}
-#dw2-preset-console-settings .dw2pc-settings-toggle {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    padding: 8px 0 12px;
-    font-size: 13px;
-}
-#dw2-preset-console-settings .dw2pc-settings-checkbox {
-    width: 17px;
-    height: 17px;
-    flex: 0 0 17px;
-    accent-color: #d2aebb;
-}
-#dw2-preset-console-settings .dw2pc-settings-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-#dw2-preset-console-settings .dw2pc-settings-action {
-    flex: 1 1 92px;
-    min-height: 34px;
-    padding: 7px 8px;
-    border: 1px solid rgba(202,182,192,.35) !important;
-    border-radius: 6px !important;
-    background: rgba(211,183,197,.09) !important;
-    color: var(--SmartThemeBodyColor,#f2e9f0) !important;
-    font-size: 12px !important;
-    line-height: 1.3;
-    cursor: pointer;
-}
-#dw2-preset-console-settings .dw2pc-settings-action:disabled {
-    opacity: .55;
-    cursor: wait;
-}
-
-/* v0.4 | Quick Studio: two searchable style slots and original native groups */
-#dw2-preset-console .dw2pc-tabs {
-    grid-template-columns: repeat(5,minmax(0,1fr)) !important;
-    gap: 2px;
-    padding: 11px 11px 8px;
-}
-#dw2-preset-console .dw2pc-tab { padding: 9px 1px !important; font-size: 11px !important; }
-#dw2-preset-console .dw2pc-q-hero {
-    padding: 14px 13px;
-    margin: 6px 0 12px;
-    border: 1px solid rgba(243,226,234,.22);
-    border-radius: 6px;
-    background: linear-gradient(126deg,rgba(200,220,236,.13),rgba(255,216,235,.07));
-}
-#dw2-preset-console .dw2pc-q-kicker {
-    font: 9px/1.5 Georgia,serif !important;
-    letter-spacing:.21em;
-    color:#e9d4de;
-}
-#dw2-preset-console .dw2pc-q-hero-title {
-    font-size:17px;
-    color:#fff4f9;
-    font-weight:600;
-    margin-top:6px;
-}
-#dw2-preset-console .dw2pc-q-hero-subtitle {
-    margin-top:4px;
-    font-size:10px;
-    color:#d2cedb;
-}
-#dw2-preset-console .dw2pc-q-card {
-    border:1px solid rgba(255,255,255,.145);
-    border-radius:7px;
-    margin:0 0 10px;
-    padding:10px 11px 11px;
-    background:rgba(255,255,255,.035);
-}
-#dw2-preset-console .dw2pc-q-title {
-    font-weight:600;
-    color:#fff0f7;
-    font-size:13px;
-    line-height:1.65;
-}
-#dw2-preset-console .dw2pc-q-note,
-#dw2-preset-console .dw2pc-q-subtitle {
-    font-size:10px;
-    line-height:1.8;
-    color:#d6cdd8;
-    margin:6px 0 8px;
-}
-#dw2-preset-console .dw2pc-q-meta {
-    color:#dcd8e6;
-    font-size:10px;
-    line-height:1.7;
-    padding:1px 0 9px;
-    font-variant-numeric:tabular-nums;
-}
-#dw2-preset-console .dw2pc-q-search {
-    display:block !important;
-    width:100% !important;
-    min-width:0 !important;
-    height:35px !important;
-    padding:7px 10px !important;
-    margin:0 0 10px !important;
-    border:1px solid rgba(255,235,246,.24) !important;
-    border-radius:5px !important;
-    background:rgba(242,234,241,.09) !important;
-    box-shadow:none !important;
-    outline-offset:1px !important;
-    color:#fff2f5 !important;
-    font-size:11px !important;
-}
-#dw2-preset-console .dw2pc-q-search::placeholder { color:#d3c7d1 !important; }
-#dw2-preset-console .dw2pc-q-style-fields {
-    display:flex;
-    flex-direction:column;
-    gap:9px;
-}
-#dw2-preset-console .dw2pc-q-field {
-    display:flex;
-    flex-direction:column;
-    gap:5px;
-    min-width:0;
-}
-#dw2-preset-console .dw2pc-q-label {
-    color:#f5e4ed;
-    font-size:11px;
-}
-#dw2-preset-console .dw2pc-q-select {
-    box-sizing:border-box !important;
-    display:block !important;
-    width:100% !important;
-    min-width:0 !important;
-    max-width:100% !important;
-    height:39px !important;
-    padding:6px 10px !important;
-    border:1px solid rgba(255,238,248,.25) !important;
-    border-radius:5px !important;
-    color:#fff0f5 !important;
-    background:#515366 !important;
-    font-size:12px !important;
-    line-height:1.35 !important;
-    text-overflow:ellipsis;
-    appearance:auto !important;
-    -webkit-appearance:menulist !important;
-}
-#dw2-preset-console .dw2pc-q-select option {
-    background:#404257 !important;
-    color:#fff !important;
-    font-size:13px !important;
-}
-#dw2-preset-console .dw2pc-q-warning {
-    margin:9px 0 !important;
-    border-left:2px solid #ecb8c5;
-    padding:6px 8px !important;
-    background:rgba(255,220,233,.065);
-    color:#ffdfeb;
-    font-size:10px;
-    line-height:1.75;
-}
-#dw2-preset-console .dw2pc-q-native-head {
-    display:flex !important;
-    align-items:center;
-    gap:8px;
-    width:100% !important;
-    padding:5px 0 7px !important;
-    margin:0 !important;
-    border:0 !important;
-    background:transparent !important;
-    color:#fff3f8 !important;
-    font-size:13px !important;
-    cursor:pointer;
-}
-#dw2-preset-console .dw2pc-q-native-name {
-    flex:1 1 auto;
-    min-width:0;
-    font-weight:600;
-    text-align:left;
-}
-#dw2-preset-console .dw2pc-q-native-count {
-    font-variant-numeric:tabular-nums;
-    font-size:10px;
-    color:#e5cbda;
-}
-#dw2-preset-console .dw2pc-q-native-arrow {
-    width:12px;
-    color:#f3d7e2;
-    text-align:center;
-}
-#dw2-preset-console .dw2pc-q-native-rows {
-    padding-top:3px;
-}
-#dw2-preset-console .dw2pc-q-native-rows .dw2pc-item {
-    padding:7px 1px;
-    min-height:42px;
-}
-#dw2-preset-console .dw2pc-q-native-rows .dw2pc-item-name {
-    font-size:11px;
-}
-#dw2-preset-console .dw2pc-q-jump {
-    display:block !important;
-    width:100% !important;
-    margin:9px 0 0 !important;
-    padding:8px !important;
-    border:1px solid rgba(255,235,245,.17) !important;
-    border-radius:5px !important;
-    background:rgba(255,255,255,.035) !important;
-    color:#f1dfec !important;
-    font-size:10px !important;
-    text-align:center !important;
-    cursor:pointer;
-}
-#dw2-preset-console .dw2pc-q-foot {
-    padding:1px 2px 14px;
-    text-align:center;
-}
-@media (max-width:360px) {
-    #dw2-preset-console .dw2pc-tabs { padding-inline:7px; }
-    #dw2-preset-console .dw2pc-tab { font-size:10px !important; }
+  --dw2pc-text:rgba(249,247,244,.95);
+  --dw2pc-muted:rgba(218,220,224,.64);
+  --dw2pc-line:rgba(196,220,232,.16);
+  --dw2pc-line-hi:rgba(228,242,248,.27);
+  --dw2pc-selection:rgba(172,208,223,.105);
+  --dw2pc-blue:rgba(196,226,238,.92);
+  --dw2pc-faint:rgba(255,255,255,.027);
+  position:fixed!important;
+  z-index:2147483500!important;
+  inset:0;
+  width:0!important;
+  height:0!important;
+  pointer-events:none;
+  font-family:'Noto Serif SC','Songti SC','STSong',serif!important;
+  color:var(--dw2pc-text)!important;
+  -webkit-font-smoothing:antialiased;
+}
+#dw2-preset-console *,#dw2-preset-console *::before,#dw2-preset-console *::after{box-sizing:border-box!important;}
+#dw2-preset-console button,#dw2-preset-console input,#dw2-preset-console select{
+  font-family:inherit!important;
+  letter-spacing:normal;
+}
+#dw2-preset-console button:focus-visible,
+#dw2-preset-console input:focus-visible,
+#dw2-preset-console select:focus-visible{
+  outline:1px solid rgba(204,235,245,.7)!important;
+  outline-offset:2px!important;
+}
+/* Floating control */
+#dw2-preset-console .dw2pc-launcher{
+  pointer-events:auto!important;
+  position:fixed!important;
+  display:grid!important;
+  place-items:center!important;
+  width:52px!important;
+  height:52px!important;
+  padding:0!important;
+  border:1px solid rgba(255,255,255,.52)!important;
+  border-radius:50%!important;
+  color:#fff!important;
+  font:32px/1 Georgia,serif!important;
+  background:linear-gradient(140deg,rgba(208,224,230,.80),rgba(217,201,211,.78))!important;
+  box-shadow:0 8px 24px rgba(0,0,0,.23),inset 0 1px 1px rgba(255,255,255,.25)!important;
+  backdrop-filter:blur(15px) saturate(106%);
+  -webkit-backdrop-filter:blur(15px) saturate(106%);
+  cursor:grab;
+  touch-action:none!important;
+  -webkit-tap-highlight-color:transparent!important;
+  transition:transform .13s ease-out;
+  -webkit-user-select:none;
+  user-select:none;
+}
+#dw2-preset-console .dw2pc-launcher:active{cursor:grabbing;transform:scale(.97);}
+#dw2-preset-console .dw2pc-launcher[hidden]{display:none!important;}
+/* Popover shell. Auto height instead of 580px blank space. */
+#dw2-preset-console .dw2pc-panel{
+  pointer-events:auto!important;
+  position:fixed!important;
+  display:flex!important;
+  flex-direction:column!important;
+  width:min(354px,calc(100vw - 18px))!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:calc(100dvh - 24px)!important;
+  padding:0!important;
+  overflow:hidden!important;
+  isolation:isolate;
+  border:1px solid var(--dw2pc-line)!important;
+  border-top-color:var(--dw2pc-line-hi)!important;
+  border-radius:6px!important;
+  background:linear-gradient(180deg,rgba(45,42,42,.91),rgba(25,25,28,.96))!important;
+  color:var(--dw2pc-text)!important;
+  box-shadow:0 20px 48px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.024)!important;
+  backdrop-filter:blur(24px) saturate(108%)!important;
+  -webkit-backdrop-filter:blur(24px) saturate(108%)!important;
+  animation:dw2pc-enter .17s ease-out both;
+}
+#dw2-preset-console .dw2pc-panel[hidden]{display:none!important;}
+@keyframes dw2pc-enter{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+#dw2-preset-console .dw2pc-header{
+  display:flex;
+  flex:0 0 auto;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:14px 15px 12px;
+  border-bottom:1px solid rgba(196,220,232,.10);
+}
+#dw2-preset-console .dw2pc-eyebrow{
+  color:rgba(202,220,231,.60);
+  font:9px/1.5 Georgia,serif!important;
+  font-weight:400;
+  letter-spacing:.20em;
+}
+#dw2-preset-console .dw2pc-title{
+  margin:3px 0 2px;
+  color:#faf8f5;
+  font:23px/1.3 Georgia,serif!important;
+  letter-spacing:.013em;
+}
+#dw2-preset-console .dw2pc-source-status{
+  max-width:265px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:var(--dw2pc-muted);
+  font-size:10px;
+}
+#dw2-preset-console .dw2pc-close{
+  flex:0 0 25px;
+  width:25px;
+  height:30px;
+  padding:0!important;
+  border:0!important;
+  background:none!important;
+  color:rgba(245,244,244,.67)!important;
+  font-size:24px!important;
+  cursor:pointer;
+}
+#dw2-preset-console .dw2pc-tabs{
+  display:grid;
+  flex:0 0 auto;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:3px;
+  padding:8px 11px 9px;
+  border-bottom:1px solid rgba(196,220,232,.09);
+}
+#dw2-preset-console .dw2pc-tab{
+  min-width:0;
+  min-height:33px;
+  padding:6px 2px!important;
+  border:1px solid transparent!important;
+  border-radius:3px!important;
+  background:transparent!important;
+  color:var(--dw2pc-muted)!important;
+  font-size:11px!important;
+  cursor:pointer;
+}
+#dw2-preset-console .dw2pc-tab.is-active{
+  border-color:rgba(191,220,232,.18)!important;
+  background:linear-gradient(90deg,rgba(172,208,223,.11),rgba(255,255,255,.018))!important;
+  color:rgba(251,251,249,.96)!important;
+}
+/* Shared scroll well and search */
+#dw2-preset-console .dw2pc-search-wrap{flex:0 0 auto;padding:8px 12px 0;}
+#dw2-preset-console .dw2pc-search,
+#dw2-preset-console .dw2pc-q-search{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  height:34px!important;
+  padding:6px 10px!important;
+  border:1px solid rgba(196,220,232,.16)!important;
+  border-radius:3px!important;
+  background:rgba(255,255,255,.034)!important;
+  box-shadow:none!important;
+  color:var(--dw2pc-text)!important;
+  font-size:11px!important;
+}
+#dw2-preset-console .dw2pc-search::placeholder,
+#dw2-preset-console .dw2pc-q-search::placeholder{color:rgba(221,221,225,.41)!important;}
+#dw2-preset-console .dw2pc-search[hidden]{display:none!important;}
+#dw2-preset-console .dw2pc-list{
+  flex:0 1 auto;
+  min-height:0;
+  overflow-y:auto!important;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  padding:7px 12px 12px;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(180,212,226,.20) transparent;
+}
+#dw2-preset-console .dw2pc-list::-webkit-scrollbar{width:3px;}
+#dw2-preset-console .dw2pc-list::-webkit-scrollbar-thumb{background:rgba(180,212,226,.2);border-radius:6px;}
+#dw2-preset-console .dw2pc-footer{
+  flex:0 0 auto;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  padding:9px 14px max(9px,env(safe-area-inset-bottom,0px));
+  border-top:1px solid rgba(196,220,232,.10);
+  color:var(--dw2pc-muted);
+  font:9px/1.4 Georgia,serif!important;
+  letter-spacing:.075em;
+}
+#dw2-preset-console .dw2pc-refresh{
+  padding:2px 0!important;
+  border:0!important;
+  background:none!important;
+  color:var(--dw2pc-blue)!important;
+  font-size:11px!important;
+  cursor:pointer;
+}
+/* Group containers, aligned with bookshelf menus */
+#dw2-preset-console .dw2pc-group-section,
+#dw2-preset-console .dw2pc-regex-subgroup,
+#dw2-preset-console .dw2pc-q-card{
+  margin:4px 0 7px;
+  overflow:hidden;
+  border:1px solid rgba(196,220,232,.12)!important;
+  border-radius:4px!important;
+  background:rgba(255,255,255,.017)!important;
+}
+#dw2-preset-console .dw2pc-group-expand,
+#dw2-preset-console .dw2pc-regex-subgroup-header{
+  display:flex!important;
+  width:100%!important;
+  min-height:36px;
+  align-items:center;
+  gap:7px;
+  padding:7px 9px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:rgba(255,255,255,.027)!important;
+  color:var(--dw2pc-text)!important;
+  text-align:left!important;
+  font-size:11px!important;
+  cursor:pointer;
+}
+#dw2-preset-console .dw2pc-group-expand:hover,
+#dw2-preset-console .dw2pc-group-expand:focus-visible,
+#dw2-preset-console .dw2pc-regex-subgroup-header:focus-visible{
+  background:linear-gradient(90deg,rgba(172,208,223,.065),rgba(255,255,255,.015))!important;
+}
+#dw2-preset-console .dw2pc-group-heading,
+#dw2-preset-console .dw2pc-regex-subgroup-name{
+  flex:1;
+  min-width:0;
+  overflow-wrap:anywhere;
+  line-height:1.6;
+  font-size:11px;
+}
+#dw2-preset-console .dw2pc-group-count,
+#dw2-preset-console .dw2pc-regex-subgroup-count{
+  color:var(--dw2pc-muted);
+  font:10px/1.4 inherit;
+  font-variant-numeric:tabular-nums;
+}
+#dw2-preset-console .dw2pc-group-arrow,
+#dw2-preset-console .dw2pc-regex-subgroup-arrow{
+  flex:0 0 14px;
+  text-align:right;
+  font-size:14px;
+  color:var(--dw2pc-blue);
+}
+#dw2-preset-console .dw2pc-group-body,
+#dw2-preset-console .dw2pc-regex-subgroup-body{padding:0 8px 5px;}
+#dw2-preset-console .dw2pc-group-body[hidden],
+#dw2-preset-console .dw2pc-regex-subgroup-body[hidden]{display:none!important;}
+#dw2-preset-console .dw2pc-group-title{
+  display:flex;
+  justify-content:space-between;
+  margin:8px 1px 5px;
+  padding:0 0 6px;
+  color:var(--dw2pc-text);
+  border-bottom:1px solid var(--dw2pc-line);
+  font-size:11px;
+}
+#dw2-preset-console .dw2pc-group-title .dw2pc-group-count{color:var(--dw2pc-muted);}
+#dw2-preset-console .dw2pc-item{
+  display:flex;
+  min-height:39px;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px;
+  padding:7px 2px;
+  border-bottom:1px solid rgba(196,220,232,.075);
+}
+#dw2-preset-console .dw2pc-item:last-child{border-bottom:0;}
+#dw2-preset-console .dw2pc-item-detail{flex:1 1 auto;min-width:0;}
+#dw2-preset-console .dw2pc-item-name{
+  color:rgba(245,242,239,.90);
+  font-size:11px;
+  font-weight:400;
+  line-height:1.55;
+  overflow-wrap:anywhere;
+}
+#dw2-preset-console .dw2pc-item-source{
+  color:var(--dw2pc-muted);
+  font-size:9px;
+}
+#dw2-preset-console .dw2pc-favorite{
+  flex:0 0 23px;
+  min-width:0!important;
+  padding:2px!important;
+  border:0!important;
+  color:rgba(211,226,235,.84)!important;
+  background:none!important;
+  font-size:16px!important;
+  cursor:pointer;
+}
+#dw2-preset-console .dw2pc-switch{
+  flex:0 0 42px;
+  min-height:24px;
+  padding:3px 4px!important;
+  border:1px solid rgba(196,220,232,.20)!important;
+  border-radius:999px!important;
+  background:rgba(255,255,255,.035)!important;
+  color:rgba(232,232,236,.48)!important;
+  font:600 10px/1.25 Arial,sans-serif!important;
+  cursor:pointer;
+}
+#dw2-preset-console .dw2pc-switch.is-on{
+  border-color:rgba(179,215,228,.43)!important;
+  background:rgba(176,207,221,.11)!important;
+  color:rgba(227,247,255,.94)!important;
+}
+#dw2-preset-console .dw2pc-switch:disabled{opacity:.45;cursor:wait;}
+#dw2-preset-console .dw2pc-item.is-protected{opacity:.65;}
+#dw2-preset-console .dw2pc-protected{color:var(--dw2pc-blue);font-size:10px;}
+#dw2-preset-console .dw2pc-help{
+  padding:2px 2px;
+  color:var(--dw2pc-muted);
+  font-size:10px;
+  line-height:1.75;
+}
+#dw2-preset-console .dw2pc-empty{
+  padding:18px 7px;
+  color:var(--dw2pc-muted);
+  font-size:11px;
+  text-align:center;
+  line-height:1.8;
+}
+/* Modes and source settings */
+#dw2-preset-console .dw2pc-mode-field{display:flex;flex-direction:column;gap:5px;padding:7px 0;}
+#dw2-preset-console .dw2pc-mode-label{font-size:11px;color:var(--dw2pc-text);}
+#dw2-preset-console .dw2pc-mode-select{
+  width:100%;
+  min-height:35px;
+  padding:7px 9px!important;
+  border:1px solid var(--dw2pc-line)!important;
+  border-radius:3px!important;
+  background:rgb(51,49,51)!important;
+  color:var(--dw2pc-text)!important;
+  font-size:11px!important;
+}
+#dw2-preset-console .dw2pc-mode-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:9px 0;}
+#dw2-preset-console .dw2pc-mode-button{
+  padding:9px 5px!important;
+  border:1px solid var(--dw2pc-line)!important;
+  border-radius:3px!important;
+  background:rgba(174,203,215,.065)!important;
+  color:var(--dw2pc-text)!important;
+  font-size:11px!important;
+  cursor:pointer;
+}
+#dw2-preset-console .dw2pc-regex-group .dw2pc-group-body{padding:1px 8px 7px;}
+#dw2-preset-console .dw2pc-regex-group .dw2pc-group-count{white-space:nowrap;}
+#dw2-preset-console .dw2pc-regex-subgroup{margin:5px 0 6px;}
+#dw2-preset-console .dw2pc-regex-subgroup-header{min-height:34px;}
+#dw2-preset-console .dw2pc-regex-permission{
+  margin:6px 0;
+  padding:7px;
+  background:rgba(183,201,213,.045);
+  border-left:1px solid var(--dw2pc-blue);
+}
+#dw2-preset-console .dw2pc-regex-group .dw2pc-empty{padding:12px 5px;}
+/* Quick Studio, reduced to actual controls rather than a second cover page */
+#dw2-preset-console .dw2pc-q-intro{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  padding:4px 2px 8px;
+  margin:0 0 2px;
+  border-bottom:1px solid rgba(196,220,232,.095);
+}
+#dw2-preset-console .dw2pc-q-intro-name{
+  color:rgba(249,248,245,.95);
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:.035em;
+}
+#dw2-preset-console .dw2pc-q-intro-meta{
+  font:9px/1.3 Georgia,serif!important;
+  letter-spacing:.16em;
+  color:rgba(189,217,230,.52);
+}
+#dw2-preset-console .dw2pc-q-card{
+  padding:9px 10px 10px;
+  margin-bottom:7px;
+}
+#dw2-preset-console .dw2pc-q-title{
+  color:rgba(246,244,240,.95);
+  font-size:12px;
+  font-weight:600;
+  line-height:1.5;
+}
+#dw2-preset-console .dw2pc-q-meta{
+  margin:2px 0 7px;
+  color:rgba(209,220,228,.60);
+  font-size:10px;
+  font-variant-numeric:tabular-nums;
+}
+#dw2-preset-console .dw2pc-q-search{height:31px!important;margin:0 0 8px!important;}
+#dw2-preset-console .dw2pc-q-style-fields{display:flex;flex-direction:column;gap:6px;}
+#dw2-preset-console .dw2pc-q-field{display:flex;align-items:center;gap:8px;min-width:0;}
+#dw2-preset-console .dw2pc-q-label{
+  flex:0 0 42px;
+  color:rgba(221,221,224,.68);
+  font-size:11px;
+  white-space:nowrap;
+}
+#dw2-preset-console .dw2pc-q-select{
+  display:block!important;
+  flex:1 1 auto;
+  width:0!important;
+  min-width:0!important;
+  max-width:100%!important;
+  height:34px!important;
+  padding:6px 9px!important;
+  border:1px solid rgba(196,220,232,.20)!important;
+  border-radius:3px!important;
+  background:rgb(50,49,51)!important;
+  color:var(--dw2pc-text)!important;
+  font-size:11px!important;
+  box-shadow:none!important;
+  text-overflow:ellipsis;
+  appearance:auto!important;
+  -webkit-appearance:menulist!important;
+}
+#dw2-preset-console .dw2pc-q-select option{
+  background:rgb(46,45,48)!important;
+  color:#f7f7f7!important;
+  font-size:12px!important;
+}
+#dw2-preset-console .dw2pc-q-native-head{
+  display:flex!important;
+  width:100%!important;
+  align-items:center;
+  gap:7px;
+  min-height:27px;
+  padding:2px 0!important;
+  background:none!important;
+  border:0!important;
+  color:var(--dw2pc-text)!important;
+  text-align:left!important;
+  font-size:12px!important;
+  cursor:pointer;
+}
+#dw2-preset-console .dw2pc-q-native-name{flex:1;min-width:0;font-weight:600;}
+#dw2-preset-console .dw2pc-q-native-count{color:var(--dw2pc-muted);font-size:10px;font-variant-numeric:tabular-nums;}
+#dw2-preset-console .dw2pc-q-native-arrow{width:14px;text-align:right;color:var(--dw2pc-blue);}
+#dw2-preset-console .dw2pc-q-native-rows{padding:5px 0 1px;}
+#dw2-preset-console .dw2pc-q-native-rows .dw2pc-item{min-height:37px;padding:6px 0;}
+#dw2-preset-console .dw2pc-q-jump{
+  display:block!important;
+  width:100%!important;
+  margin:8px 0 0!important;
+  padding:6px 6px!important;
+  border:0!important;
+  border-top:1px solid rgba(196,220,232,.09)!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:rgba(197,222,233,.73)!important;
+  font-size:10px!important;
+  text-align:right!important;
+  cursor:pointer;
+}
+#dw2-preset-console .dw2pc-q-jump:hover{color:rgba(241,251,253,.95)!important;}
+#dw2-preset-console .dw2pc-q-warning{
+  margin:6px 0;
+  padding:5px 7px;
+  color:rgba(247,224,222,.90);
+  border-left:1px solid rgba(241,198,191,.62);
+  background:rgba(241,198,191,.042);
+  font-size:10px;
+  line-height:1.7;
+}
+/* TT extension settings entry; remains consistent with host drawer */
+#dw2-preset-console-settings .dw2pc-settings-heading{display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+#dw2-preset-console-settings .dw2pc-settings-content{padding:8px 10px 12px;background:transparent;color:var(--SmartThemeBodyColor,inherit);}
+#dw2-preset-console-settings .dw2pc-settings-hint{margin:6px 0 12px;font-size:11px;line-height:1.5;opacity:.72;}
+#dw2-preset-console-settings .dw2pc-settings-toggle{display:flex;gap:10px;align-items:center;padding:7px 0 10px;font-size:12px;}
+#dw2-preset-console-settings .dw2pc-settings-checkbox{width:17px;height:17px;flex:0 0 17px;accent-color:#b2cbd6;}
+#dw2-preset-console-settings .dw2pc-settings-actions{display:flex;flex-wrap:wrap;gap:7px;}
+#dw2-preset-console-settings .dw2pc-settings-action{
+  flex:1 1 92px;
+  min-height:33px;
+  padding:7px 8px!important;
+  border:1px solid rgba(196,220,232,.20)!important;
+  border-radius:4px!important;
+  background:rgba(181,210,225,.06)!important;
+  color:var(--SmartThemeBodyColor,#e8e8ea)!important;
+  font-size:11px!important;
+  cursor:pointer;
+}
+#dw2-preset-console-settings .dw2pc-settings-action:disabled{opacity:.5;cursor:wait;}
+@media(max-width:500px){
+  #dw2-preset-console .dw2pc-panel{width:min(345px,calc(100vw - 18px))!important;}
+  #dw2-preset-console .dw2pc-tabs{padding-inline:8px;}
+  #dw2-preset-console .dw2pc-tab{font-size:11px!important;}
+}
+@media(max-width:360px){
+  #dw2-preset-console .dw2pc-tab{font-size:10px!important;}
+}
+@media(prefers-reduced-motion:reduce){
+  #dw2-preset-console .dw2pc-panel{animation:none!important;}
 }
