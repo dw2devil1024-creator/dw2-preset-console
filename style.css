@@ -1,4 +1,4 @@
-/* DW2 · Preset Console v0.4.3
+/* DW2 · Preset Console v0.4.4
  * Standalone stylesheet. Glass tokens translated from DW2 · Story Archive's
  * v1.6.1 folder/sort popovers; intentionally not coupled to Tavern themes.
  * Compact layouts, quiet borders, warm charcoal and water-blue glass details.
@@ -57,7 +57,8 @@
   user-select:none;
 }
 #dw2-preset-console .dw2pc-launcher:active{cursor:grabbing;transform:scale(.97);}
-#dw2-preset-console .dw2pc-launcher.is-snapping{transition:left .20s cubic-bezier(.2,.75,.25,1),top .20s ease,transform .13s ease-out;}
+#dw2-preset-console .dw2pc-launcher.is-snapping{transition:left .23s cubic-bezier(.22,.74,.24,1),top .20s ease,transform .13s ease-out;}
+#dw2-preset-console .dw2pc-launcher.is-peeking{transition:left .34s cubic-bezier(.2,.76,.24,1),transform .13s ease-out;}
 #dw2-preset-console .dw2pc-launcher[hidden]{display:none!important;}
 /* Popover shell. Auto height instead of 580px blank space. */
 #dw2-preset-console .dw2pc-panel{
@@ -131,16 +132,21 @@
 #dw2-preset-console .dw2pc-theme svg{display:block;width:16px;height:16px;}
 #dw2-preset-console .dw2pc-theme:focus-visible{border-color:var(--dw2pc-line)!important;}
 #dw2-preset-console .dw2pc-close{
-  flex:0 0 25px;
-  width:25px;
-  height:30px;
+  width:29px!important;
+  min-width:29px!important;
+  height:29px!important;
+  display:grid!important;
+  place-items:center!important;
   padding:0!important;
-  border:0!important;
-  background:none!important;
-  color:rgba(245,244,244,.67)!important;
-  font-size:24px!important;
+  border:1px solid rgba(188,213,228,.16)!important;
+  border-radius:4px!important;
+  background:rgba(179,205,220,.065)!important;
+  color:rgba(198,222,236,.76)!important;
+  line-height:1!important;
   cursor:pointer;
 }
+#dw2-preset-console .dw2pc-close svg{display:block;width:16px;height:16px;}
+#dw2-preset-console .dw2pc-close:focus-visible{border-color:var(--dw2pc-line)!important;}
 #dw2-preset-console .dw2pc-tabs{
   display:grid;
   flex:0 0 auto;
@@ -534,7 +540,7 @@
   --dw2pc-faint:rgba(255,255,255,.025);
 }
 #dw2-preset-console[data-appearance="day"] .dw2pc-panel{
-  background:linear-gradient(155deg,rgba(91,107,116,.34),rgba(57,49,49,.46))!important;
+  background:linear-gradient(155deg,rgba(81,96,105,.48),rgba(48,44,47,.59))!important;
   border:1px solid rgba(202,225,236,.22)!important;
   border-top-color:rgba(232,246,252,.32)!important;
   box-shadow:0 16px 38px rgba(0,0,0,.20),inset 0 1px 0 rgba(255,255,255,.035)!important;
@@ -546,13 +552,13 @@
 #dw2-preset-console[data-appearance="day"] .dw2pc-group-section,
 #dw2-preset-console[data-appearance="day"] .dw2pc-regex-subgroup,
 #dw2-preset-console[data-appearance="day"] .dw2pc-q-card{
-  background:rgba(255,255,255,.045)!important;
+  background:rgba(255,255,255,.065)!important;
   border-color:rgba(219,237,245,.22)!important;
   box-shadow:inset 0 1px rgba(255,255,255,.03)!important;
 }
 #dw2-preset-console[data-appearance="day"] .dw2pc-group-expand,
 #dw2-preset-console[data-appearance="day"] .dw2pc-regex-subgroup-header{
-  background:rgba(255,255,255,.035)!important;
+  background:rgba(255,255,255,.055)!important;
   color:rgba(253,250,247,.94)!important;
 }
 #dw2-preset-console[data-appearance="day"] .dw2pc-header,
@@ -561,7 +567,8 @@
 #dw2-preset-console[data-appearance="day"] .dw2pc-q-intro{
   border-color:rgba(205,229,239,.16)!important;
 }
-#dw2-preset-console[data-appearance="day"] .dw2pc-theme{
+#dw2-preset-console[data-appearance="day"] .dw2pc-theme,
+#dw2-preset-console[data-appearance="day"] .dw2pc-close{
   border-color:rgba(226,245,252,.23)!important;
   background:rgba(255,255,255,.07)!important;
   color:rgba(251,250,248,.83)!important;
