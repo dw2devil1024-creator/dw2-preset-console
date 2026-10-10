@@ -1,5 +1,5 @@
 /**
- * DW2 Quick Studio / v0.4.1
+ * DW2 Quick Studio / v0.4.2
  * Compact real-state controls: two style selectors and two existing native
  * groups. This module never alters actual prompt content or BaiBai metadata.
  */
@@ -150,7 +150,6 @@ export function createQuickStudio(deps) {
         header.append(node('span','q-native-name',def.name));
         header.append(node('span','q-native-count',
             members.filter(x=>x.enabled).length+'/'+members.length));
-        header.append(node('span','q-native-arrow',isOpen?'⌃':'⌄'));
         header.setAttribute('aria-expanded',String(isOpen));
         outer.append(header);
         if(isOpen) {
