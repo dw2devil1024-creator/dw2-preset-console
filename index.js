@@ -5,7 +5,7 @@
  * use TT's own persistence and refresh coordinator.
  */
 import { promptManager } from '../../../openai.js';
-import { extension_settings, extensionTypes, openThirdPartyExtensionMenu } from '../../extensions.js';
+import { extension_settings, extensionTypes, openThirdPartyExtensionMenu } from '../../../extensions.js';
 import { getPresetManager } from '../../../preset-manager.js';
 import { ZHIJIE_GROUPS, ZHIJIE_PROMPT_GROUP_IDS } from './groupMap.js';
 import { characters, eventSource, event_types, this_chid, getRequestHeaders } from '../../../../script.js';
@@ -23,7 +23,7 @@ import { getRegexRefreshCoordinator } from '../../../tauri/perf/regex-refresh-co
 const NS = 'dw2pc';
 const ROOT_ID = 'dw2-preset-console';
 const SETTINGS_ID = 'dw2-preset-console-settings';
-const VERSION = '0.2.2';
+const VERSION = '0.2.3';
 const STORAGE_KEY = 'dw2.preset.console.v2';
 const CATEGORIES = [
     { id: 'groups', label: '分组' },
@@ -787,7 +787,7 @@ function build() {
     panel.append(listArea);
 
     const foot = node('footer', 'footer');
-    foot.append(node('span', '', 'DW2 · CONTROL  /  v0.2.2'));
+    foot.append(node('span', '', 'DW2 · CONTROL  /  v0.2.3'));
     foot.append(button('⟳ 同步', 'refresh', () => render(), '重新读取当前状态'));
     panel.append(foot);
     root.append(panel);
