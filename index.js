@@ -643,6 +643,102 @@ function showPanel(yes) {
     }
 }
 
+function mountSettingsPanel() {
+    if (document.getElementById(SETTINGS_ID)) return;
+    const host = document.querySelector('#extensions_settings2')
+        || document.querySelector('#extensions_settings')
+        || document.querySelector('.extensions_settings');
+    if (!host) {
+        if (++settingsAttempts <= 50) setTimeout(mountSettingsPanel,400);
+        return;
+    }
+    const section=node('div','settings-block');
+    section.id=SETTINGS_ID;
+    section.classList.add('inline-drawer');
+    const heading=node('div','settings-heading');
+    heading.classList.add('inline-drawer-toggle','inline-drawer-header');
+    const icon=node('div','settings-chevron');
+    icon.classList.add('inline-drawer-icon','fa-solid','fa-circle-chevron-down','down');
+    heading.append(node('b','settings-title','✧ DW2 · Preset Console'),icon);
+    heading.setAttribute('aria-expanded','false');
+
+    const content=node('div','settings-content');
+    content.classList.add('inline-drawer-content');
+    content.style.display='none';
+    heading.addEventListener('click',event=>{
+        event.preventDefault();
+        event.stopPropagation();
+        const expand=content.style.display==='none';
+        content.style.display=expand?'block':'none';
+        heading.setAttribute('aria-expanded',String(expand));
+        icon.classList.toggle('down',!expand);
+    });
+    content.append(node('p','settings-hint','预设与正则悬浮控制台 · v'+VERSION));
+    const toggleRow=node('label','settings-toggle');
+    const checkbox=node('input','settings-checkbox');
+    checkbox.type='checkbox';
+    checkbox.checked=prefs.floatingVisible;
+    checkbox.addEventListener('change',()=>{
+        prefs.floatingVisible=checkbox.checked;
+        launcher.hidden=!prefs.floatingVisible;
+        if(!prefs.floatingVisible)showPanel(false);
+        savePreferences();
+    });
+    toggleRow.append(checkbox,node('span','','显示悬浮按钮'));
+    content.append(toggleRow);
+    const actions=node('div','settings-actions');
+    actions.append(button('打开控制台','settings-action',()=>{
+        if (!prefs.floatingVisible) {
+            prefs.floatingVisible=true;
+            launcher.hidden=false;
+            checkbox.checked=true;
+            savePreferences();
+        }
+        showPanel(true);
+    }));
+    const updateButton=button('检查并更新','settings-action',async()=>{
+        if(updateInProgress)return;
+        updateInProgress=true;
+        updateButton.disabled=true;
+        updateButton.textContent='检查中…';
+        try{
+            const id=Object.keys(extensionTypes||{}).find(
+                key=>key==='third-party/dw2-preset-console' ||
+                    key.endsWith('/dw2-preset-console')
+            );
+            if(!id)throw new Error('无法识别插件安装目录，请使用管理扩展更新');
+            const res=await fetch('/api/extensions/update',{
+                method:'POST',
+                headers:getRequestHeaders(),
+                body:JSON.stringify({
+                    extensionName:id.replace(/^third-party/,''),
+                    global:extensionTypes[id]==='global',
+                }),
+            });
+            if(!res.ok){
+                const message=await res.text();
+                throw new Error((message||'HTTP '+res.status).slice(0,220));
+            }
+            const result=await res.json();
+            if(result.isUpToDate)toast('插件已是最新版本','success');
+            else toast('代码更新完成，请刷新 TT 酒馆。','success');
+        }catch(error){
+            toast('检查更新失败：'+(error.message||error),'warning');
+        }finally{
+            updateInProgress=false;
+            updateButton.disabled=false;
+            updateButton.textContent='检查并更新';
+        }
+    });
+    actions.append(updateButton);
+    actions.append(button('管理扩展','settings-action',()=>{
+        void openThirdPartyExtensionMenu();
+    }));
+    content.append(actions);
+    section.append(heading,content);
+    host.append(section);
+}
+
 function build() {
     root = node('div', 'root');
     root.id = ROOT_ID;
@@ -760,6 +856,7 @@ function build() {
         if (e.detail !== 0) e.preventDefault();
     });
     placeLauncher();
+    launcher.hidden = !prefs.floatingVisible;
 
     window.addEventListener('resize', () => { placeLauncher(); placePanel(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && open) showPanel(false); });
@@ -770,6 +867,7 @@ function build() {
     ].filter(Boolean);
     refreshEvents.forEach(type => eventSource.on(type, () => setTimeout(refreshIfChanged, 400)));
     setInterval(refreshIfChanged, 1600);
+    mountSettingsPanel();
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build, { once: true });
