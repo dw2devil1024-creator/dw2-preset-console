@@ -1,5 +1,5 @@
 /**
- * DW2 Quick Studio / v0.4
+ * DW2 Quick Studio / v0.4.1
  * Compact real-state controls: two style selectors and two existing native
  * groups. This module never alters actual prompt content or BaiBai metadata.
  */
@@ -8,7 +8,7 @@ export function createQuickStudio(deps) {
         savePreferences, setPromptStates, itemRow, toast, isProtectedPrompt,
         goToTab, redraw } = deps;
     let filter = '';
-    const open = { writing: true, viewpoint: false };
+    const open = { writing: false, viewpoint: false };
     const folderSpecs = [
         { id:'writing', needle:'写作指导｜字数·段落·节奏·浓度',
           name:'写作指导', subtitle:'字数 · 段落 · 节奏 · 情感基调' },
@@ -99,17 +99,17 @@ export function createQuickStudio(deps) {
     function styleSelectors(container,items) {
         const group=groupBy('通用文风库');
         const box=node('section','q-card');
-        box.append(node('div','q-title','双文风 · 下拉选择'));
-        box.append(node('p','q-note','两个独立选择框，可搜索全部文风。不会触碰你在原预设中额外开启的风格。'));
+        box.append(node('div','q-title','文风选择'));
+        
         if(!group) {
             box.append(node('p','q-warning','未读取到通用文风库，请从「全部」检查。'));
             container.append(box);return;
         }
         const styles=getStyles(items), slots=activeSlots(styles);
         const enabledCount=styles.filter(x=>x.enabled).length;
-        box.append(node('div','q-meta','共 '+styles.length+' 个可选文风 · '+enabledCount+' 个已开启'));
+        box.append(node('div','q-meta',styles.length+' 可选  ·  '+enabledCount+' 启用'));
         const search=node('input','q-search');search.type='search';
-        search.placeholder='搜索文风名称…';
+        search.placeholder='搜索文风…';
         search.value=filter;
         const selectBoxes=[];
         const fields=node('div','q-style-fields');
@@ -131,7 +131,7 @@ export function createQuickStudio(deps) {
         box.append(search,fields);
         if(enabledCount>2)box.append(node('p','q-warning',
             '当前有 '+enabledCount+' 个文风开启，超过双槽数量。插件会保留额外文风，请在原分组核对。'));
-        box.append(button('浏览全部文风 ↗','q-jump',()=>showGroupInAll(group)));
+        box.append(button('全部文风 ↗','q-jump',()=>showGroupInAll(group)));
         container.append(box);
     }
     function nativeGroup(container,items,def) {
@@ -152,12 +152,12 @@ export function createQuickStudio(deps) {
             members.filter(x=>x.enabled).length+'/'+members.length));
         header.append(node('span','q-native-arrow',isOpen?'⌃':'⌄'));
         header.setAttribute('aria-expanded',String(isOpen));
-        outer.append(header,node('div','q-subtitle',def.subtitle));
+        outer.append(header);
         if(isOpen) {
             const body=node('div','q-native-rows');
             members.forEach(item=>body.append(itemRow(item,true)));
             outer.append(body);
-            outer.append(button('打开原始分组 ↗','q-jump',()=>showGroupInAll(group)));
+            outer.append(button('原始分组 ↗','q-jump',()=>showGroupInAll(group)));
         }
         container.append(outer);
     }
@@ -172,17 +172,12 @@ export function createQuickStudio(deps) {
             listArea.append(button('打开全部','q-jump',()=>goToTab('all')));
             return;
         }
-        const hero=node('div','q-hero');
-        hero.append(node('div','q-kicker','DW2 / QUICK STUDIO'));
-        hero.append(node('div','q-hero-title','织界 · 常用设置'));
-        hero.append(node('div','q-hero-subtitle','原预设同步 · 不重复造分类'));
-        listArea.append(hero);
+        const intro=node('div','q-intro');
+        intro.append(node('span','q-intro-name','常用设置'));
+        intro.append(node('span','q-intro-meta','QUICK STUDIO'));
+        listArea.append(intro);
         styleSelectors(listArea,items);
         folderSpecs.forEach(def=>nativeGroup(listArea,items,def));
-        const foot=node('div','q-foot');
-        foot.append(node('p','q-note','不常用的功能保留在原始预设分组中。'));
-        foot.append(button('查看全部原始分组 ↗','q-jump',()=>goToTab('all')));
-        listArea.append(foot);
     }
     return {render,setSlot,getStyles,activeSlots};
 }
