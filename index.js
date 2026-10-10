@@ -8,7 +8,7 @@ import { promptManager } from '../../../openai.js';
 import { extension_settings, extensionTypes, openThirdPartyExtensionMenu } from '../../../extensions.js';
 import { getPresetManager } from '../../../preset-manager.js';
 import { ZHIJIE_GROUPS, ZHIJIE_PROMPT_GROUP_IDS } from './groupMap.js';
-import { QUICK_SECTIONS } from './quickConfig.js';
+import { createQuickStudio } from './quickStudio.js';
 import { characters, eventSource, event_types, this_chid, getRequestHeaders } from '../../../../script.js';
 import {
     getScriptsByType,
@@ -24,20 +24,18 @@ import { getRegexRefreshCoordinator } from '../../../tauri/perf/regex-refresh-co
 const NS = 'dw2pc';
 const ROOT_ID = 'dw2-preset-console';
 const SETTINGS_ID = 'dw2-preset-console-settings';
-const VERSION = '0.3.0';
+const VERSION = '0.4.0';
 const STORAGE_KEY = 'dw2.preset.console.v2';
 const CATEGORIES = [
     { id: 'quick', label: '快捷' },
-    { id: 'groups', label: '分组' },
-    { id: 'prompts', label: '全部' },
+    { id: 'all', label: '全部' },
     { id: 'favs', label: '常用' },
     { id: 'modes', label: '模式' },
     { id: 'regex', label: '正则' },
 ];
 let prefs = loadPreferences();
 let tab = 'quick';
-let quickSection = 'frequent';
-let quickExpandedCard = '';
+
 let filter = '';
 let root, launcher, panel, listArea, searchField, sourceStatus, tabBar;
 let open = false;
@@ -345,218 +343,16 @@ function empty(label) { return node('div', 'empty', label); }
 
 // Quick view is a presentation layer: all toggles use the same PromptManager
 // persistence as the full Groups tab. Exact-name matching is deliberate.
-function quickResolve(name, items = promptItems()) {
-    const matches = items.filter(item => item.name === name);
-    if (matches.length !== 1 || isProtectedPrompt(matches[0])) return null;
-    return matches[0];
-}
-function quickOptions(card, items) {
-    return (card.options || []).map(([label, name]) =>
-        ({ label, name, item: quickResolve(name, items) }));
-}
-function quickOpenGroup(card, items) {
-    const lookupName = card.options?.[0]?.[1] || card.examples?.[0]?.[1];
-    const anchor = lookupName ? quickResolve(lookupName, items) : null;
-    const data = presetGroupData();
-    const group = card.group
-        ? data.groups.find(g => g.name === card.group)
-        : data.groups.find(g => g.id === anchor?.groupId);
-    if (!group) {
-        toast('当前预设没有对应的原始分组，请使用「全部」查看。','warning');
-        tab = 'prompts'; filter = ''; render();
-        return;
-    }
-    presetSettings().groupCollapsed[group.id] = false;
-    savePreferences();
-    tab = 'groups';
-    filter = '';
-    render();
-    requestAnimationFrame(() => {
-        const target = Array.from(listArea.querySelectorAll('[data-group-id]'))
-            .find(el => el.dataset.groupId === group.id);
-        target?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    });
-}
-async function quickChoose(card, name, items) {
-    const resolved = quickOptions(card, items);
-    if (!resolved.length || resolved.some(x => !x.item)) {
-        toast('部分条目已被改名或缺失，快捷互斥切换已锁定，避免误操作。','warning');
-        return;
-    }
-    const target = resolved.find(x => x.name === name);
-    if (!target) return;
-    const changes = resolved.map(x => ({id:x.item.id, enabled:x===target}))
-        .filter((change,i) => resolved[i].item.enabled !== change.enabled);
-    if (!changes.length) return;
-    try { await setPromptStates(changes); }
-    catch (e) { toast(String(e.message || e),'error'); render(); }
-}
-async function quickClearChoices(card, items) {
-    const resolved = quickOptions(card,items);
-    if (!resolved.length || resolved.some(x=>!x.item)) return;
-    const changes = resolved.filter(x=>x.item.enabled).map(x=>({id:x.item.id,enabled:false}));
-    if (!changes.length) return;
-    try { await setPromptStates(changes); }
-    catch(e) { toast(String(e.message || e),'error');render(); }
-}
-function quickToggleRow(label, item, muted = false) {
-    const row=node('div','quick-option');
-    const display=node('div','quick-option-name',label);
-    display.title=item?.name||label;
-    row.append(display);
-    if (muted) {
-        row.append(node('span','quick-status',item?(item.enabled?'已开启':'已关闭'):'未找到'));
-    } else if (item) {
-        row.append(makeToggle(item.enabled,()=>togglePrompt(item)));
-    } else {
-        row.append(node('span','quick-missing','不可用'));
-    }
-    return row;
-}
-function quickChoiceContent(card, items, parent) {
-    const matches=quickOptions(card,items);
-    const safe=matches.every(x=>x.item);
-    const active=matches.filter(x=>x.item?.enabled);
-    if (!safe) {
-        parent.append(node('p','quick-note','有选项在当前预设中找不到或存在重名。为保护原预设，这组暂不可快捷切换。'));
-    }
-    for (const option of matches) {
-        const enabled=!!option.item?.enabled;
-        const choice=button((enabled?'●  ':'○  ')+option.label,'quick-choice'+(enabled?' is-on':''),()=>{
-            void quickChoose(card,option.name,promptItems());
-        });
-        choice.disabled=!safe||working;
-        choice.setAttribute('aria-pressed',String(enabled));
-        parent.append(choice);
-    }
-    const clear=button('关闭这组选项','quick-clear',()=>void quickClearChoices(card,promptItems()));
-    clear.disabled=!safe||!active.length||working;
-    parent.append(clear);
-}
-function quickStyleContent(card, items, parent) {
-    const group=presetGroupData().groups.find(g=>g.name===card.group);
-    const members=group?items.filter(i=>i.groupId===group.id&&!isProtectedPrompt(i)):[];
-    const enabled=members.filter(i=>i.enabled);
-    const examples=(card.examples||[]).map(([label,name])=>({label,item:quickResolve(name,items)}))
-        .filter(o=>o.item);
-    const seen=new Set();
-    const entries=[];
-    // Always show the user's currently enabled styles, even if not in our sample list.
-    for (const item of enabled) {
-        if (!seen.has(item.id)) { entries.push({label:item.name,item});seen.add(item.id); }
-    }
-    for (const option of examples) {
-        if (!seen.has(option.item.id)) { entries.push(option);seen.add(option.item.id); }
-    }
-    if (!group) parent.append(node('p','quick-note','没有读取到当前预设的文风库。使用原分组查看全部条目。'));
-    if (!entries.length) parent.append(empty('暂时没有找到已启用或推荐的文风。'));
-    entries.slice(0,18).forEach(x=>parent.append(quickToggleRow(x.label,x.item)));
-    if (entries.length>18) parent.append(node('p','quick-note','另有 '+(entries.length-18)+' 项未在快捷页展示，原始分组保留完整列表。'));
-}
-function quickCoreContent(card, items, parent) {
-    const {world,novel}=getModePrompts();
-    const worldMatch=world&&items.some(x=>x.id===world.id);
-    const novelMatch=novel&&items.some(x=>x.id===novel.id);
-    const safe=worldMatch&&novelMatch&&!isProtectedPrompt(world)&&!isProtectedPrompt(novel);
-    for (const [id,label,item] of [['world','织界 · 世界演绎者',world],['novel','墨团子 · 小说家',novel]]) {
-        const b=button((item?.enabled?'●  ':'○  ')+label,'quick-choice'+(item?.enabled?' is-on':''),()=>void activateMode(id));
-        b.disabled=!safe||working;
-        b.setAttribute('aria-pressed',String(!!item?.enabled));
-        parent.append(b);
-    }
-    if (world?.enabled && novel?.enabled)
-        parent.append(node('p','quick-warning','两个身份同时开启，建议选择其中一个。'));
-    if (!safe) parent.append(node('p','quick-note','未能确定两个身份条目，请从「模式」页手动核对绑定。'));
-}
-function quickCard(card, items) {
-    const wrap=node('article','quick-card');
-    const isOpen=quickExpandedCard===card.id;
-    let summary='点击展开';
-    if (card.kind==='identity') {
-        const {world,novel}=getModePrompts();
-        summary=world?.enabled&&novel?.enabled?'身份冲突':world?.enabled?'织界':novel?.enabled?'墨团子':'均未开启';
-    } else if(card.kind==='styles'){
-        const group=presetGroupData().groups.find(g=>g.name===card.group);
-        const member=group?items.filter(x=>x.groupId===group.id):[];
-        summary=group?member.filter(x=>x.enabled).length+' 种已启用':'暂无映射';
-    } else {
-        const options=quickOptions(card,items);
-        const selected=options.filter(o=>o.item?.enabled);
-        summary=card.kind==='choices'
-            ? (selected.length===1?selected[0].label:selected.length>1?'多项同时启用':'未选')
-            : selected.length+'/'+options.length+' 已启用';
-        if (options.some(o=>!o.item)) summary+=' · 部分缺失';
-    }
-    if(card.kind==='readonly') {
-        const entry=quickOptions(card,items)[0]?.item || items.find(i=>i.name===card.options?.[0]?.[1]);
-        summary=entry?(entry.enabled?'已开启 · 受保护':'已关闭 · 受保护'):'未找到 · 受保护';
-    }
-    const head=button('','quick-card-header',()=>{
-        quickExpandedCard=isOpen?'':card.id;
+const quickStudio = createQuickStudio({
+    node, button, presetGroupData, promptItems, presetSettings,
+    savePreferences, setPromptStates, itemRow, toast, isProtectedPrompt,
+    goToTab(id) {
+        tab = id;
+        filter = '';
         render();
-    });
-    head.append(node('span','quick-card-name',card.title));
-    head.append(node('span','quick-card-state',summary));
-    head.append(node('span','quick-card-arrow',isOpen?'⌃':'⌄'));
-    head.setAttribute('aria-expanded',String(isOpen));
-    wrap.append(head);
-    if(!isOpen)return wrap;
-    const contents=node('div','quick-card-contents');
-    contents.append(node('p','quick-note',card.note));
-    if(card.kind==='choices') quickChoiceContent(card,items,contents);
-    else if(card.kind==='styles') quickStyleContent(card,items,contents);
-    else if(card.kind==='identity') quickCoreContent(card,items,contents);
-    else quickOptions(card,items).forEach(o=>{
-        if(card.kind==='readonly') {
-            const original=items.find(x=>x.name===o.name);
-            contents.append(quickToggleRow(o.label,original,true));
-        } else contents.append(quickToggleRow(o.label,o.item));
-    });
-    if (card.kind!=='identity'&&card.kind!=='readonly')
-        contents.append(button('查看原始分组 ↗','quick-open-group',
-            ()=>quickOpenGroup(card,promptItems())));
-    wrap.append(contents);
-    return wrap;
-}
-function showQuick(){
-    const items=promptItems();
-    const {world,novel}=getModePrompts();
-    const isZhiJie=!!world&&!!novel &&
-        items.some(x=>x.name==='🌙 织界｜世界运行总则');
-    if(!items.length){
-        listArea.append(empty('预设尚未就绪。请选择 Chat Completion 预设，再重新打开控制台。'));
-        return;
-    }
-    if(!isZhiJie){
-        listArea.append(node('p','quick-note','快捷页当前专为《织界 v6.58》设计。为了避免错开其他预设的条目，这里不会猜测相似名称。'));
-        listArea.append(button('前往原始分组','quick-open-group',()=>{
-            tab='groups';render();
-        }));
-        return;
-    }
-    const banner=node('div','quick-banner');
-    banner.append(node('div','quick-kicker','DW2 / QUICK STUDIO'));
-    banner.append(node('div','quick-banner-title','织界 · 快捷控制'));
-    banner.append(node('div','quick-banner-subtitle','功能视角｜不改原预设结构｜状态实时读取'));
-    listArea.append(banner);
-
-    const nav=node('nav','quick-navigation');
-    QUICK_SECTIONS.forEach(section=>{
-        const b=button(section.label,'quick-section-tab'+(section.id===quickSection?' is-active':''),()=>{
-            quickSection=section.id;
-            quickExpandedCard='';
-            render();
-            listArea.scrollTop=0;
-        });
-        b.setAttribute('aria-pressed',String(section.id===quickSection));
-        nav.append(b);
-    });
-    listArea.append(nav);
-    const section=QUICK_SECTIONS.find(x=>x.id===quickSection)||QUICK_SECTIONS[0];
-    listArea.append(node('div','quick-section-title',section.subtitle));
-    for(const card of section.cards)listArea.append(quickCard(card,items));
-    listArea.append(node('p','quick-footer-note','需要更细的设置，请使用「分组」或「全部」。快捷选择操作的是原预设条目，不会修改条目正文。'));
-}
+    },
+    redraw() { render(); },
+});
 
 function showGroups() {
     const items = promptItems();
@@ -815,10 +611,10 @@ function render() {
     searchField.hidden = tab === 'modes' || tab === 'quick';
     if (searchField.value !== filter) searchField.value = filter;
     listArea.replaceChildren();
-    if (tab === 'quick') showQuick();
+    if (tab === 'quick') quickStudio.render(listArea);
     else if (tab === 'modes') showModes();
     else if (tab === 'regex') showRegex();
-    else if (tab === 'groups') showGroups();
+    else if (tab === 'all') showGroups();
     else showPrompts(tab === 'favs');
     lastSignature = currentSignature();
 }
@@ -1010,7 +806,7 @@ function build() {
     panel.append(listArea);
 
     const foot = node('footer', 'footer');
-    foot.append(node('span', '', 'DW2 · CONTROL  /  v0.3.0'));
+    foot.append(node('span', '', 'DW2 · CONTROL  /  v0.4.0'));
     foot.append(button('⟳ 同步', 'refresh', () => render(), '重新读取当前状态'));
     panel.append(foot);
     root.append(panel);
