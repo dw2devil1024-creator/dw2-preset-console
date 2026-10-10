@@ -24,7 +24,7 @@ import { getRegexRefreshCoordinator } from '../../../tauri/perf/regex-refresh-co
 const NS = 'dw2pc';
 const ROOT_ID = 'dw2-preset-console';
 const SETTINGS_ID = 'dw2-preset-console-settings';
-const VERSION = '0.4.3';
+const VERSION = '0.4.4';
 const STORAGE_KEY = 'dw2.preset.console.v2';
 const CATEGORIES = [
     { id: 'quick', label: '快捷' },
@@ -44,6 +44,7 @@ let lastSignature = '';
 let drag = null;
 let dragFrame = 0;
 let dragTarget = null;
+let peekTimer = null;
 let settingsAttempts = 0;
 let updateInProgress = false;
 
@@ -642,32 +643,61 @@ function dockSideForX(x, size = launcherMetrics().size) {
     if (innerWidth - x - size <= band) return 'right';
     return null;
 }
+const PEEK_VISIBLE = .58;
+const PEEK_DELAY_MS = 650;
+// Stored docking coordinates remain fully visible. The partial offscreen
+// position is presentation-only, so drag and resize remain deterministic.
+function launcherPeekShift() {
+    return Math.round(launcherMetrics().size * (1 - PEEK_VISIBLE));
+}
+function revealLauncher() {
+    if (peekTimer !== null) clearTimeout(peekTimer);
+    peekTimer = null;
+    launcher.classList.remove('is-peeking');
+    if (prefs.position?.side === 'left') launcher.style.left = '0px';
+    else if (prefs.position?.side === 'right') launcher.style.left = (innerWidth - launcherMetrics().size) + 'px';
+}
+function scheduleLauncherPeek() {
+    if (peekTimer !== null) clearTimeout(peekTimer);
+    peekTimer = null;
+    if (!launcher || !prefs.position?.side || open || drag || !prefs.floatingVisible) return;
+    peekTimer = setTimeout(() => {
+        peekTimer = null;
+        if (!launcher || open || drag || !prefs.position?.side || !prefs.floatingVisible) return;
+        const offset = launcherPeekShift();
+        launcher.classList.add('is-peeking');
+        launcher.style.left = (prefs.position.side === 'left'
+            ? -offset : innerWidth - launcherMetrics().size + offset) + 'px';
+    }, PEEK_DELAY_MS);
+}
 function placeLauncher() {
-    const m = launcherMetrics();
-    const stored = prefs.position;
+    const m = launcherMetrics(), stored = prefs.position;
     const x = stored?.side === 'left' ? 0
         : stored?.side === 'right' ? innerWidth - m.size
         : stored?.x ?? (innerWidth - m.size);
     const y = stored?.y ?? (innerHeight * .56);
-    const pos = boundLauncher(x, y);
-    const detected = stored?.side || dockSideForX(pos.x, m.size);
+    const pos = boundLauncher(x,y);
+    const detected = stored?.side || dockSideForX(pos.x,m.size);
     if (detected) pos.x = detected === 'left' ? 0 : innerWidth - m.size;
+    launcher.classList.remove('is-peeking');
     launcher.style.left = pos.x + 'px';
     launcher.style.top = pos.y + 'px';
     if (!stored || stored.x !== pos.x || stored.y !== pos.y || stored.side !== detected) {
         prefs.position = { x:pos.x, y:pos.y, side:detected };
         savePreferences();
     }
+    scheduleLauncherPeek();
     return pos;
 }
 function snapLauncherIfNearEdge() {
     const m = launcherMetrics();
-    const side = dockSideForX(launcher.offsetLeft, m.size);
+    const side = dockSideForX(launcher.offsetLeft,m.size);
     if (!side) return false;
     const x = side === 'left' ? 0 : innerWidth - m.size;
     launcher.classList.add('is-snapping');
+    launcher.classList.remove('is-peeking');
     launcher.style.left = x + 'px';
-    prefs.position = { x, y: launcher.offsetTop, side };
+    prefs.position = { x, y:launcher.offsetTop, side };
     savePreferences();
     return true;
 }
@@ -751,8 +781,11 @@ function showPanel(yes) {
     launcher.setAttribute('aria-expanded', String(yes));
     panel.hidden = !yes;
     if (yes) {
+        revealLauncher();
         render();
         requestAnimationFrame(placePanel);
+    } else {
+        scheduleLauncherPeek();
     }
 }
 
@@ -795,6 +828,7 @@ function mountSettingsPanel() {
         prefs.floatingVisible=checkbox.checked;
         launcher.hidden=!prefs.floatingVisible;
         if(!prefs.floatingVisible)showPanel(false);
+        else scheduleLauncherPeek();
         savePreferences();
     });
     toggleRow.append(checkbox,node('span','','显示悬浮按钮'));
@@ -805,6 +839,7 @@ function mountSettingsPanel() {
             prefs.floatingVisible=true;
             launcher.hidden=false;
             checkbox.checked=true;
+            scheduleLauncherPeek();
             savePreferences();
         }
         showPanel(true);
@@ -914,7 +949,10 @@ function build() {
     headings.append(sourceStatus);
     const headActions = node('div', 'header-actions');
     themeButton = button('', 'theme', () => changeAppearance(prefs.appearance === 'day' ? 'night' : 'day'));
-    headActions.append(themeButton, button('×', 'close', () => showPanel(false), '关闭'));
+    const closeButton = button('', 'close', () => showPanel(false), '关闭');
+    closeButton.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 5.5 18.5 18.5M18.5 5.5 5.5 18.5"/></svg>';
+    closeButton.setAttribute('aria-label', '关闭控制台');
+    headActions.append(themeButton, closeButton);
     head.append(headings, headActions);
     applyAppearance();
     panel.append(head);
@@ -944,7 +982,7 @@ function build() {
     panel.append(listArea);
 
     const foot = node('footer', 'footer');
-    foot.append(node('span', '', 'DW2 · CONTROL  /  v0.4.3'));
+    foot.append(node('span', '', 'DW2 · CONTROL  /  v0.4.4'));
     const footActions = node('div', 'footer-actions');
     footActions.append(button('⟳ 刷新', 'refresh', () => render(), '重新读取当前状态'));
     saveButton = button('保存预设', 'save-preset', () => void saveActivePreset(), '执行 TT 原生「更新预设」操作');
@@ -971,6 +1009,7 @@ function build() {
 
     launcher.addEventListener('pointerdown', e => {
         if (e.button !== 0 || drag) return;
+        revealLauncher();
         launcher.classList.remove('is-snapping');
         drag = {
             id: e.pointerId,
@@ -1007,12 +1046,14 @@ function build() {
         drag = null;
         dragTarget = null;
         if (!didDrag) showPanel(!open);
+        else scheduleLauncherPeek();
     });
     launcher.addEventListener('pointercancel', () => {
         if (dragFrame) cancelAnimationFrame(dragFrame);
         dragFrame = 0;
         dragTarget = null;
         drag = null;
+        scheduleLauncherPeek();
     });
     launcher.addEventListener('click', e => {
         // Suppress ordinary pointer-generated click; pointerup has handled it.
