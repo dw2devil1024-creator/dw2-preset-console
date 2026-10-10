@@ -39,10 +39,33 @@
     backdrop-filter: blur(18px) saturate(120%);
     -webkit-backdrop-filter: blur(18px) saturate(120%);
     cursor: grab;
+    touch-action: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    transition: transform .13s ease-out, box-shadow .15s ease-out;
     user-select: none;
     -webkit-user-select: none;
 }
-#dw2-preset-console .dw2pc-launcher:active { cursor: grabbing; }
+#dw2-preset-console .dw2pc-launcher:active {
+    cursor: grabbing;
+    transform: scale(.965);
+}
+#dw2-preset-console .dw2pc-regex-group .dw2pc-group-heading { font-size: 12px; }
+#dw2-preset-console .dw2pc-regex-group .dw2pc-group-count {
+    flex: 0 0 auto;
+    font-variant-numeric: tabular-nums;
+    font-size: 10px;
+    opacity: .85;
+}
+#dw2-preset-console .dw2pc-regex-group .dw2pc-group-body {
+    padding: 3px 8px 10px;
+}
+#dw2-preset-console .dw2pc-regex-group .dw2pc-empty { padding: 22px 8px; }
+#dw2-preset-console .dw2pc-regex-permission {
+    padding: 9px;
+    margin: 5px 0 7px;
+    border-left: 2px solid rgba(255,218,229,.58);
+    background: rgba(255,255,255,.04);
+}
 #dw2-preset-console .dw2pc-launcher:focus-visible {
     outline: 2px solid #f9d7e4 !important;
     outline-offset: 3px !important;
