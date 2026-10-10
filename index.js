@@ -24,7 +24,7 @@ import { getRegexRefreshCoordinator } from '../../../tauri/perf/regex-refresh-co
 const NS = 'dw2pc';
 const ROOT_ID = 'dw2-preset-console';
 const SETTINGS_ID = 'dw2-preset-console-settings';
-const VERSION = '0.4.0';
+const VERSION = '0.4.1';
 const STORAGE_KEY = 'dw2.preset.console.v2';
 const CATEGORIES = [
     { id: 'quick', label: '快捷' },
@@ -608,7 +608,9 @@ function render() {
     tabBar.querySelectorAll('button').forEach(b => {
         b.classList.toggle('is-active', b.dataset.tab === tab);
     });
-    searchField.hidden = tab === 'modes' || tab === 'quick';
+    const hideSearch = tab === 'modes' || tab === 'quick';
+    searchField.hidden = hideSearch;
+    searchField.parentElement.hidden = hideSearch;
     if (searchField.value !== filter) searchField.value = filter;
     listArea.replaceChildren();
     if (tab === 'quick') quickStudio.render(listArea);
@@ -806,7 +808,7 @@ function build() {
     panel.append(listArea);
 
     const foot = node('footer', 'footer');
-    foot.append(node('span', '', 'DW2 · CONTROL  /  v0.4.0'));
+    foot.append(node('span', '', 'DW2 · CONTROL  /  v0.4.1'));
     foot.append(button('⟳ 同步', 'refresh', () => render(), '重新读取当前状态'));
     panel.append(foot);
     root.append(panel);
@@ -877,6 +879,13 @@ function build() {
     placeLauncher();
     launcher.hidden = !prefs.floatingVisible;
 
+    if (typeof ResizeObserver === 'function') {
+        // The popover is now content-sized; keep it onscreen when folders expand.
+        const panelSizeWatcher = new ResizeObserver(() => {
+            if (open) requestAnimationFrame(placePanel);
+        });
+        panelSizeWatcher.observe(panel);
+    }
     window.addEventListener('resize', () => { placeLauncher(); placePanel(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && open) showPanel(false); });
 
