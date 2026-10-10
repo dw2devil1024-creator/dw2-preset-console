@@ -25,7 +25,7 @@ import { getRegexRefreshCoordinator } from '../../../tauri/perf/regex-refresh-co
 const NS = 'dw2pc';
 const ROOT_ID = 'dw2-preset-console';
 const SETTINGS_ID = 'dw2-preset-console-settings';
-const VERSION = '0.4.6';
+const VERSION = '0.4.7';
 const STORAGE_KEY = 'dw2.preset.console.v2';
 const CATEGORIES = [
     { id: 'quick', label: '快捷' },
@@ -934,9 +934,13 @@ function build() {
     root = node('div', 'root');
     root.id = ROOT_ID;
     root.dataset.appearance = prefs.appearance;
-    launcher = button('✧', 'launcher', e => {
+    launcher = button('', 'launcher', e => {
         if (e.detail === 0) showPanel(!open); // keyboard / assistive input
     }, 'DW2 · Control');
+    // The old text character ✧ was centered by its font box, not its actual
+    // outline. Use a symmetrical 4-point vector centered exactly on (15,15).
+    // An inline SVG also avoids font fallback differences on iOS and Android.
+    launcher.innerHTML = '<svg viewBox="0 0 30 30" width="29" height="29" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2.8 C17.5 10.1 19.9 12.5 27.2 15 C19.9 17.5 17.5 19.9 15 27.2 C12.5 19.9 10.1 17.5 2.8 15 C10.1 12.5 12.5 10.1 15 2.8 Z"/></svg>';
     launcher.setAttribute('aria-label', '打开 DW2 预设控制台');
     launcher.setAttribute('aria-expanded', 'false');
     root.append(launcher);
