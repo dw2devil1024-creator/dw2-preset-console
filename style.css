@@ -1,4 +1,4 @@
-/* DW2 · Preset Console v0.4.4
+/* DW2 · Preset Console v0.4.5
  * Standalone stylesheet. Glass tokens translated from DW2 · Story Archive's
  * v1.6.1 folder/sort popovers; intentionally not coupled to Tavern themes.
  * Compact layouts, quiet borders, warm charcoal and water-blue glass details.
@@ -496,6 +496,8 @@
 }
 /* TT extension settings entry; remains consistent with host drawer */
 #dw2-preset-console-settings .dw2pc-settings-heading{display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+#dw2-preset-console-settings .dw2pc-settings-heading-text{display:flex;flex:1 1 auto;min-width:0;flex-direction:column;gap:2px;}
+#dw2-preset-console-settings .dw2pc-settings-byline{font-size:10px!important;font-weight:400;line-height:1.45;letter-spacing:.035em;color:var(--SmartThemeBodyColor,inherit);opacity:.56;}
 #dw2-preset-console-settings .dw2pc-settings-content{padding:8px 10px 12px;background:transparent;color:var(--SmartThemeBodyColor,inherit);}
 #dw2-preset-console-settings .dw2pc-settings-hint{margin:6px 0 12px;font-size:11px;line-height:1.5;opacity:.72;}
 #dw2-preset-console-settings .dw2pc-settings-toggle{display:flex;gap:10px;align-items:center;padding:7px 0 10px;font-size:12px;}
