@@ -806,7 +806,10 @@ function mountSettingsPanel() {
     heading.classList.add('inline-drawer-toggle','inline-drawer-header');
     const icon=node('div','settings-chevron');
     icon.classList.add('inline-drawer-icon','fa-solid','fa-circle-chevron-down','down');
-    heading.append(node('b','settings-title','✧ DW2 · Preset Console'),icon);
+    const titleGroup = node('div', 'settings-heading-text');
+    titleGroup.append(node('b','settings-title','✧ DW2 · Preset Console'));
+    titleGroup.append(node('span','settings-byline','沈先生 × 阿黛'));
+    heading.append(titleGroup,icon);
     heading.setAttribute('aria-expanded','false');
 
     const content=node('div','settings-content');
@@ -821,7 +824,6 @@ function mountSettingsPanel() {
         icon.classList.toggle('down',!expand);
     });
     content.append(node('p','settings-hint','预设与正则悬浮控制台 · v'+VERSION));
-    content.append(node('p','settings-credit','联合制作 · 沈先生 × 阿黛'));
     const toggleRow=node('label','settings-toggle');
     const checkbox=node('input','settings-checkbox');
     checkbox.type='checkbox';
