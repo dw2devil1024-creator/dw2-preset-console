@@ -3,10 +3,10 @@
   "loading_order": 92,
   "requires": [],
   "optional": [],
-  "js": "index.js?v=0.4.5",
-  "css": "style.css?v=0.4.5",
-  "author": "沈先生 × 阿黛",
-  "version": "0.4.5",
+  "js": "index.js?v=0.4.6",
+  "css": "style.css?v=0.4.6",
+  "author": "S.A. · DW2",
+  "version": "0.4.6",
   "minimum_client_version": "1.16.0",
   "auto_update": false
 }
