@@ -1,4 +1,4 @@
-/* DW2 · Preset Console v0.4.2
+/* DW2 · Preset Console v0.4.3
  * Standalone stylesheet. Glass tokens translated from DW2 · Story Archive's
  * v1.6.1 folder/sort popovers; intentionally not coupled to Tavern themes.
  * Compact layouts, quiet borders, warm charcoal and water-blue glass details.
@@ -114,7 +114,21 @@
   font-size:10px;
 }
 #dw2-preset-console .dw2pc-header-actions{display:flex;align-items:center;gap:3px;flex:0 0 auto;}
-#dw2-preset-console .dw2pc-theme{width:30px;min-width:30px;height:30px;padding:0!important;border:1px solid transparent!important;background:transparent!important;color:var(--dw2pc-blue)!important;font:19px/1 Georgia,serif!important;cursor:pointer;}
+#dw2-preset-console .dw2pc-theme{
+  width:29px!important;
+  min-width:29px!important;
+  height:29px!important;
+  display:grid!important;
+  place-items:center!important;
+  padding:0!important;
+  border:1px solid rgba(188,213,228,.16)!important;
+  border-radius:4px!important;
+  background:rgba(179,205,220,.065)!important;
+  color:rgba(198,222,236,.76)!important;
+  line-height:1!important;
+  cursor:pointer;
+}
+#dw2-preset-console .dw2pc-theme svg{display:block;width:16px;height:16px;}
 #dw2-preset-console .dw2pc-theme:focus-visible{border-color:var(--dw2pc-line)!important;}
 #dw2-preset-console .dw2pc-close{
   flex:0 0 25px;
@@ -506,116 +520,95 @@
 }
 
 
-/* DAY | book-shelf frosted dropdown translated to a pale, legible glass layer.
-   Day/ night are independent of whichever TT theme is currently installed. */
-#dw2-preset-console[data-appearance="day"]{
-  --dw2pc-text:rgba(39,47,54,.94);
-  --dw2pc-muted:rgba(65,73,82,.71);
-  --dw2pc-line:rgba(121,151,169,.31);
-  --dw2pc-line-hi:rgba(249,253,255,.74);
-  --dw2pc-selection:rgba(155,184,205,.19);
-  --dw2pc-blue:rgba(58,102,129,.93);
-  --dw2pc-faint:rgba(102,129,149,.063);
+/* DAY / CLEAR MIST · Exact material reference:
+   DW2 Story Archive's final v1.6.2 override (not its older opaque v1.6.1).
+   16px backdrop blur, cool smoke gray .34 / warm smoke .46.
+   Keep text light and readable over changing character-cover backgrounds. */
+#dw2-preset-console[data-appearance="day"] {
+  --dw2pc-text:rgba(251,249,246,.97);
+  --dw2pc-muted:rgba(232,235,239,.72);
+  --dw2pc-line:rgba(202,225,236,.22);
+  --dw2pc-line-hi:rgba(232,246,252,.32);
+  --dw2pc-selection:rgba(185,220,234,.14);
+  --dw2pc-blue:rgba(211,235,246,.92);
+  --dw2pc-faint:rgba(255,255,255,.025);
 }
 #dw2-preset-console[data-appearance="day"] .dw2pc-panel{
-  background:linear-gradient(155deg,rgba(229,236,240,.91),rgba(208,218,227,.91) 55%,rgba(224,220,224,.92))!important;
-  border-color:rgba(255,255,255,.72)!important;
-  border-bottom-color:rgba(130,155,170,.31)!important;
-  box-shadow:0 20px 48px rgba(24,35,43,.25),inset 0 1px 0 rgba(255,255,255,.70)!important;
-  backdrop-filter:blur(26px) saturate(104%)!important;
-  -webkit-backdrop-filter:blur(26px) saturate(104%)!important;
-}
-#dw2-preset-console[data-appearance="day"] .dw2pc-header,
-#dw2-preset-console[data-appearance="day"] .dw2pc-tabs,
-#dw2-preset-console[data-appearance="day"] .dw2pc-footer{
-  border-color:rgba(113,144,165,.20);
-}
-#dw2-preset-console[data-appearance="day"] .dw2pc-eyebrow,
-#dw2-preset-console[data-appearance="day"] .dw2pc-q-intro-meta{
-  color:rgba(86,113,131,.72)!important;
-}
-#dw2-preset-console[data-appearance="day"] .dw2pc-title,
-#dw2-preset-console[data-appearance="day"] .dw2pc-q-title,
-#dw2-preset-console[data-appearance="day"] .dw2pc-q-intro-name,
-#dw2-preset-console[data-appearance="day"] .dw2pc-q-native-head,
-#dw2-preset-console[data-appearance="day"] .dw2pc-group-expand,
-#dw2-preset-console[data-appearance="day"] .dw2pc-regex-subgroup-header{
-  color:rgba(37,47,54,.95)!important;
-}
-#dw2-preset-console[data-appearance="day"] .dw2pc-close{color:rgba(56,73,85,.85)!important;}
-#dw2-preset-console[data-appearance="day"] .dw2pc-tab{color:rgba(59,73,84,.75)!important;}
-#dw2-preset-console[data-appearance="day"] .dw2pc-tab.is-active{
-  color:rgba(31,59,73,.95)!important;
-  border-color:rgba(118,153,175,.35)!important;
-  background:linear-gradient(90deg,rgba(153,182,203,.21),rgba(255,255,255,.23))!important;
+  background:linear-gradient(155deg,rgba(91,107,116,.34),rgba(57,49,49,.46))!important;
+  border:1px solid rgba(202,225,236,.22)!important;
+  border-top-color:rgba(232,246,252,.32)!important;
+  box-shadow:0 16px 38px rgba(0,0,0,.20),inset 0 1px 0 rgba(255,255,255,.035)!important;
+  backdrop-filter:blur(16px) saturate(114%)!important;
+  -webkit-backdrop-filter:blur(16px) saturate(114%)!important;
+  color:var(--dw2pc-text)!important;
+  text-shadow:0 1px 2px rgba(9,17,24,.28);
 }
 #dw2-preset-console[data-appearance="day"] .dw2pc-group-section,
 #dw2-preset-console[data-appearance="day"] .dw2pc-regex-subgroup,
 #dw2-preset-console[data-appearance="day"] .dw2pc-q-card{
-  background:rgba(255,255,255,.19)!important;
-  border-color:rgba(130,160,178,.26)!important;
+  background:rgba(255,255,255,.045)!important;
+  border-color:rgba(219,237,245,.22)!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.03)!important;
 }
 #dw2-preset-console[data-appearance="day"] .dw2pc-group-expand,
 #dw2-preset-console[data-appearance="day"] .dw2pc-regex-subgroup-header{
-  background:rgba(255,255,255,.13)!important;
+  background:rgba(255,255,255,.035)!important;
+  color:rgba(253,250,247,.94)!important;
 }
-#dw2-preset-console[data-appearance="day"] .dw2pc-group-expand:hover,
-#dw2-preset-console[data-appearance="day"] .dw2pc-group-expand[aria-expanded="true"],
-#dw2-preset-console[data-appearance="day"] .dw2pc-regex-subgroup-header[aria-expanded="true"]{
-  background:rgba(149,182,200,.14)!important;
+#dw2-preset-console[data-appearance="day"] .dw2pc-header,
+#dw2-preset-console[data-appearance="day"] .dw2pc-footer,
+#dw2-preset-console[data-appearance="day"] .dw2pc-tabs,
+#dw2-preset-console[data-appearance="day"] .dw2pc-q-intro{
+  border-color:rgba(205,229,239,.16)!important;
 }
-#dw2-preset-console[data-appearance="day"] .dw2pc-item-name,
-#dw2-preset-console[data-appearance="day"] .dw2pc-q-label,
-#dw2-preset-console[data-appearance="day"] .dw2pc-mode-label{
-  color:rgba(39,51,60,.92)!important;
+#dw2-preset-console[data-appearance="day"] .dw2pc-theme{
+  border-color:rgba(226,245,252,.23)!important;
+  background:rgba(255,255,255,.07)!important;
+  color:rgba(251,250,248,.83)!important;
 }
 #dw2-preset-console[data-appearance="day"] .dw2pc-search,
 #dw2-preset-console[data-appearance="day"] .dw2pc-q-search{
-  background:rgba(255,255,255,.35)!important;
-  border-color:rgba(131,160,179,.29)!important;
-  color:rgba(40,55,64,.96)!important;
-}
-#dw2-preset-console[data-appearance="day"] .dw2pc-search::placeholder,
-#dw2-preset-console[data-appearance="day"] .dw2pc-q-search::placeholder{
-  color:rgba(66,85,96,.58)!important;
+  background:rgba(255,255,255,.10)!important;
+  border-color:rgba(217,237,246,.22)!important;
+  color:rgba(252,251,248,.96)!important;
 }
 #dw2-preset-console[data-appearance="day"] .dw2pc-q-select,
 #dw2-preset-console[data-appearance="day"] .dw2pc-mode-select{
-  background:rgb(210,220,227)!important;
-  color:rgba(35,51,61,.96)!important;
-  border-color:rgba(133,161,180,.38)!important;
+  background:rgba(64,67,73,.77)!important;
+  color:#f9f8f6!important;
+  border-color:rgba(218,234,242,.32)!important;
 }
 #dw2-preset-console[data-appearance="day"] .dw2pc-q-select option{
-  background:rgb(217,227,234)!important;
-  color:rgb(30,44,55)!important;
+  background:rgb(63,67,76)!important;
+  color:#f9f8f6!important;
 }
-#dw2-preset-console[data-appearance="day"] .dw2pc-switch{
-  border-color:rgba(107,139,157,.35)!important;
-  background:rgba(255,255,255,.22)!important;
-  color:rgba(65,77,89,.60)!important;
+#dw2-preset-console[data-appearance="day"] .dw2pc-tab.is-active,
+#dw2-preset-console[data-appearance="day"] .dw2pc-switch.is-on,
+#dw2-preset-console[data-appearance="day"] .dw2pc-save-preset{
+  border-color:rgba(199,225,239,.35)!important;
+  background:rgba(184,220,234,.14)!important;
+  color:rgba(255,253,250,.98)!important;
 }
-#dw2-preset-console[data-appearance="day"] .dw2pc-switch.is-on{
-  border-color:rgba(90,138,166,.48)!important;
-  background:rgba(144,183,204,.28)!important;
-  color:rgba(39,88,113,.95)!important;
-}
-#dw2-preset-console[data-appearance="day"] .dw2pc-favorite,
-#dw2-preset-console[data-appearance="day"] .dw2pc-refresh,
-#dw2-preset-console[data-appearance="day"] .dw2pc-q-jump{color:rgba(54,102,128,.86)!important;}
-#dw2-preset-console[data-appearance="day"] .dw2pc-save-preset,
-#dw2-preset-console[data-appearance="day"] .dw2pc-mode-button{
-  background:rgba(151,181,199,.22)!important;
-  color:rgba(39,76,98,.96)!important;
-  border-color:rgba(117,157,183,.40)!important;
+#dw2-preset-console[data-appearance="day"] .dw2pc-item-name,
+#dw2-preset-console[data-appearance="day"] .dw2pc-q-label,
+#dw2-preset-console[data-appearance="day"] .dw2pc-q-title,
+#dw2-preset-console[data-appearance="day"] .dw2pc-q-intro-name,
+#dw2-preset-console[data-appearance="day"] .dw2pc-title{
+  color:rgba(255,253,250,.96)!important;
 }
 #dw2-preset-console[data-appearance="day"] .dw2pc-q-warning{
-  background:rgba(178,131,116,.09);
-  color:rgba(114,69,65,.91);
-  border-left-color:rgba(177,117,98,.5);
+  background:rgba(104,70,67,.19)!important;
+  color:rgba(255,227,218,.98)!important;
 }
-#dw2-preset-console[data-appearance="day"] .dw2pc-item,
-#dw2-preset-console[data-appearance="day"] .dw2pc-q-jump,
-#dw2-preset-console[data-appearance="day"] .dw2pc-group-title,
-#dw2-preset-console[data-appearance="day"] .dw2pc-q-intro{
-  border-color:rgba(126,154,172,.20)!important;
+#dw2-preset-console[data-appearance="day"] .dw2pc-q-meta,
+#dw2-preset-console[data-appearance="day"] .dw2pc-q-intro-meta,
+#dw2-preset-console[data-appearance="day"] .dw2pc-eyebrow{
+  color:rgba(227,239,245,.73)!important;
+}
+/* Native Manage Extensions toolbar: the button matches host button styling. */
+.extensions_info > .extensions_toolbar .dw2pc-manager-reload{
+  white-space:nowrap;
+  color:inherit;
+  border-color:rgba(194,219,231,.28)!important;
+  background:linear-gradient(90deg,rgba(169,199,213,.075),rgba(255,255,255,.02))!important;
 }
