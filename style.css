@@ -1,4 +1,4 @@
-/* DW2 · Preset Console v0.4.1
+/* DW2 · Preset Console v0.4.2
  * Standalone stylesheet. Glass tokens translated from DW2 · Story Archive's
  * v1.6.1 folder/sort popovers; intentionally not coupled to Tavern themes.
  * Compact layouts, quiet borders, warm charcoal and water-blue glass details.
@@ -38,25 +38,26 @@
   position:fixed!important;
   display:grid!important;
   place-items:center!important;
-  width:52px!important;
-  height:52px!important;
+  width:44px!important;
+  height:44px!important;
   padding:0!important;
-  border:1px solid rgba(255,255,255,.52)!important;
+  border:1px solid rgba(230,238,246,.47)!important;
   border-radius:50%!important;
   color:#fff!important;
-  font:32px/1 Georgia,serif!important;
-  background:linear-gradient(140deg,rgba(208,224,230,.80),rgba(217,201,211,.78))!important;
-  box-shadow:0 8px 24px rgba(0,0,0,.23),inset 0 1px 1px rgba(255,255,255,.25)!important;
+  font:27px/1 Georgia,serif!important;
+  background:linear-gradient(145deg,rgba(190,207,219,.78) 0%,rgba(168,183,204,.70) 52%,rgba(211,197,209,.78) 100%)!important;
+  box-shadow:0 6px 18px rgba(0,0,0,.19),inset 0 1px 1px rgba(255,255,255,.45)!important;
   backdrop-filter:blur(15px) saturate(106%);
   -webkit-backdrop-filter:blur(15px) saturate(106%);
   cursor:grab;
   touch-action:none!important;
   -webkit-tap-highlight-color:transparent!important;
-  transition:transform .13s ease-out;
+  transition:transform .13s ease-out,box-shadow .16s ease-out;
   -webkit-user-select:none;
   user-select:none;
 }
 #dw2-preset-console .dw2pc-launcher:active{cursor:grabbing;transform:scale(.97);}
+#dw2-preset-console .dw2pc-launcher.is-snapping{transition:left .20s cubic-bezier(.2,.75,.25,1),top .20s ease,transform .13s ease-out;}
 #dw2-preset-console .dw2pc-launcher[hidden]{display:none!important;}
 /* Popover shell. Auto height instead of 580px blank space. */
 #dw2-preset-console .dw2pc-panel{
@@ -67,7 +68,7 @@
   width:min(354px,calc(100vw - 18px))!important;
   height:auto!important;
   min-height:0!important;
-  max-height:calc(100dvh - 24px)!important;
+  max-height:calc(100dvh - 42px)!important;
   padding:0!important;
   overflow:hidden!important;
   isolation:isolate;
@@ -112,6 +113,9 @@
   color:var(--dw2pc-muted);
   font-size:10px;
 }
+#dw2-preset-console .dw2pc-header-actions{display:flex;align-items:center;gap:3px;flex:0 0 auto;}
+#dw2-preset-console .dw2pc-theme{width:30px;min-width:30px;height:30px;padding:0!important;border:1px solid transparent!important;background:transparent!important;color:var(--dw2pc-blue)!important;font:19px/1 Georgia,serif!important;cursor:pointer;}
+#dw2-preset-console .dw2pc-theme:focus-visible{border-color:var(--dw2pc-line)!important;}
 #dw2-preset-console .dw2pc-close{
   flex:0 0 25px;
   width:25px;
@@ -191,6 +195,9 @@
   font:9px/1.4 Georgia,serif!important;
   letter-spacing:.075em;
 }
+#dw2-preset-console .dw2pc-footer-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;}
+#dw2-preset-console .dw2pc-save-preset{min-height:31px;min-width:72px;padding:5px 9px!important;border:1px solid rgba(178,215,228,.38)!important;border-radius:4px!important;background:linear-gradient(90deg,rgba(174,205,221,.13),rgba(255,255,255,.028))!important;color:rgba(238,249,253,.94)!important;font-size:11px!important;cursor:pointer;}
+#dw2-preset-console .dw2pc-save-preset:disabled{opacity:.5;cursor:wait;}
 #dw2-preset-console .dw2pc-refresh{
   padding:2px 0!important;
   border:0!important;
@@ -244,13 +251,6 @@
   font-size:10px;
   line-height:1.4;
   font-variant-numeric:tabular-nums;
-}
-#dw2-preset-console .dw2pc-group-arrow,
-#dw2-preset-console .dw2pc-regex-subgroup-arrow{
-  flex:0 0 14px;
-  text-align:right;
-  font-size:14px;
-  color:var(--dw2pc-blue);
 }
 #dw2-preset-console .dw2pc-group-body,
 #dw2-preset-console .dw2pc-regex-subgroup-body{padding:0 8px 5px;}
@@ -448,7 +448,6 @@
 }
 #dw2-preset-console .dw2pc-q-native-name{flex:1;min-width:0;font-weight:600;}
 #dw2-preset-console .dw2pc-q-native-count{color:var(--dw2pc-muted);font-size:10px;font-variant-numeric:tabular-nums;}
-#dw2-preset-console .dw2pc-q-native-arrow{width:14px;text-align:right;color:var(--dw2pc-blue);}
 #dw2-preset-console .dw2pc-q-native-rows{padding:5px 0 1px;}
 #dw2-preset-console .dw2pc-q-native-rows .dw2pc-item{min-height:37px;padding:6px 0;}
 #dw2-preset-console .dw2pc-q-jump{
@@ -495,7 +494,7 @@
 }
 #dw2-preset-console-settings .dw2pc-settings-action:disabled{opacity:.5;cursor:wait;}
 @media(max-width:500px){
-  #dw2-preset-console .dw2pc-panel{width:min(345px,calc(100vw - 18px))!important;}
+  #dw2-preset-console .dw2pc-panel{width:min(345px,calc(100vw - 18px))!important;max-height:calc(100dvh - 104px)!important;}
   #dw2-preset-console .dw2pc-tabs{padding-inline:8px;}
   #dw2-preset-console .dw2pc-tab{font-size:11px!important;}
 }
@@ -504,4 +503,119 @@
 }
 @media(prefers-reduced-motion:reduce){
   #dw2-preset-console .dw2pc-panel{animation:none!important;}
+}
+
+
+/* DAY | book-shelf frosted dropdown translated to a pale, legible glass layer.
+   Day/ night are independent of whichever TT theme is currently installed. */
+#dw2-preset-console[data-appearance="day"]{
+  --dw2pc-text:rgba(39,47,54,.94);
+  --dw2pc-muted:rgba(65,73,82,.71);
+  --dw2pc-line:rgba(121,151,169,.31);
+  --dw2pc-line-hi:rgba(249,253,255,.74);
+  --dw2pc-selection:rgba(155,184,205,.19);
+  --dw2pc-blue:rgba(58,102,129,.93);
+  --dw2pc-faint:rgba(102,129,149,.063);
+}
+#dw2-preset-console[data-appearance="day"] .dw2pc-panel{
+  background:linear-gradient(155deg,rgba(229,236,240,.91),rgba(208,218,227,.91) 55%,rgba(224,220,224,.92))!important;
+  border-color:rgba(255,255,255,.72)!important;
+  border-bottom-color:rgba(130,155,170,.31)!important;
+  box-shadow:0 20px 48px rgba(24,35,43,.25),inset 0 1px 0 rgba(255,255,255,.70)!important;
+  backdrop-filter:blur(26px) saturate(104%)!important;
+  -webkit-backdrop-filter:blur(26px) saturate(104%)!important;
+}
+#dw2-preset-console[data-appearance="day"] .dw2pc-header,
+#dw2-preset-console[data-appearance="day"] .dw2pc-tabs,
+#dw2-preset-console[data-appearance="day"] .dw2pc-footer{
+  border-color:rgba(113,144,165,.20);
+}
+#dw2-preset-console[data-appearance="day"] .dw2pc-eyebrow,
+#dw2-preset-console[data-appearance="day"] .dw2pc-q-intro-meta{
+  color:rgba(86,113,131,.72)!important;
+}
+#dw2-preset-console[data-appearance="day"] .dw2pc-title,
+#dw2-preset-console[data-appearance="day"] .dw2pc-q-title,
+#dw2-preset-console[data-appearance="day"] .dw2pc-q-intro-name,
+#dw2-preset-console[data-appearance="day"] .dw2pc-q-native-head,
+#dw2-preset-console[data-appearance="day"] .dw2pc-group-expand,
+#dw2-preset-console[data-appearance="day"] .dw2pc-regex-subgroup-header{
+  color:rgba(37,47,54,.95)!important;
+}
+#dw2-preset-console[data-appearance="day"] .dw2pc-close{color:rgba(56,73,85,.85)!important;}
+#dw2-preset-console[data-appearance="day"] .dw2pc-tab{color:rgba(59,73,84,.75)!important;}
+#dw2-preset-console[data-appearance="day"] .dw2pc-tab.is-active{
+  color:rgba(31,59,73,.95)!important;
+  border-color:rgba(118,153,175,.35)!important;
+  background:linear-gradient(90deg,rgba(153,182,203,.21),rgba(255,255,255,.23))!important;
+}
+#dw2-preset-console[data-appearance="day"] .dw2pc-group-section,
+#dw2-preset-console[data-appearance="day"] .dw2pc-regex-subgroup,
+#dw2-preset-console[data-appearance="day"] .dw2pc-q-card{
+  background:rgba(255,255,255,.19)!important;
+  border-color:rgba(130,160,178,.26)!important;
+}
+#dw2-preset-console[data-appearance="day"] .dw2pc-group-expand,
+#dw2-preset-console[data-appearance="day"] .dw2pc-regex-subgroup-header{
+  background:rgba(255,255,255,.13)!important;
+}
+#dw2-preset-console[data-appearance="day"] .dw2pc-group-expand:hover,
+#dw2-preset-console[data-appearance="day"] .dw2pc-group-expand[aria-expanded="true"],
+#dw2-preset-console[data-appearance="day"] .dw2pc-regex-subgroup-header[aria-expanded="true"]{
+  background:rgba(149,182,200,.14)!important;
+}
+#dw2-preset-console[data-appearance="day"] .dw2pc-item-name,
+#dw2-preset-console[data-appearance="day"] .dw2pc-q-label,
+#dw2-preset-console[data-appearance="day"] .dw2pc-mode-label{
+  color:rgba(39,51,60,.92)!important;
+}
+#dw2-preset-console[data-appearance="day"] .dw2pc-search,
+#dw2-preset-console[data-appearance="day"] .dw2pc-q-search{
+  background:rgba(255,255,255,.35)!important;
+  border-color:rgba(131,160,179,.29)!important;
+  color:rgba(40,55,64,.96)!important;
+}
+#dw2-preset-console[data-appearance="day"] .dw2pc-search::placeholder,
+#dw2-preset-console[data-appearance="day"] .dw2pc-q-search::placeholder{
+  color:rgba(66,85,96,.58)!important;
+}
+#dw2-preset-console[data-appearance="day"] .dw2pc-q-select,
+#dw2-preset-console[data-appearance="day"] .dw2pc-mode-select{
+  background:rgb(210,220,227)!important;
+  color:rgba(35,51,61,.96)!important;
+  border-color:rgba(133,161,180,.38)!important;
+}
+#dw2-preset-console[data-appearance="day"] .dw2pc-q-select option{
+  background:rgb(217,227,234)!important;
+  color:rgb(30,44,55)!important;
+}
+#dw2-preset-console[data-appearance="day"] .dw2pc-switch{
+  border-color:rgba(107,139,157,.35)!important;
+  background:rgba(255,255,255,.22)!important;
+  color:rgba(65,77,89,.60)!important;
+}
+#dw2-preset-console[data-appearance="day"] .dw2pc-switch.is-on{
+  border-color:rgba(90,138,166,.48)!important;
+  background:rgba(144,183,204,.28)!important;
+  color:rgba(39,88,113,.95)!important;
+}
+#dw2-preset-console[data-appearance="day"] .dw2pc-favorite,
+#dw2-preset-console[data-appearance="day"] .dw2pc-refresh,
+#dw2-preset-console[data-appearance="day"] .dw2pc-q-jump{color:rgba(54,102,128,.86)!important;}
+#dw2-preset-console[data-appearance="day"] .dw2pc-save-preset,
+#dw2-preset-console[data-appearance="day"] .dw2pc-mode-button{
+  background:rgba(151,181,199,.22)!important;
+  color:rgba(39,76,98,.96)!important;
+  border-color:rgba(117,157,183,.40)!important;
+}
+#dw2-preset-console[data-appearance="day"] .dw2pc-q-warning{
+  background:rgba(178,131,116,.09);
+  color:rgba(114,69,65,.91);
+  border-left-color:rgba(177,117,98,.5);
+}
+#dw2-preset-console[data-appearance="day"] .dw2pc-item,
+#dw2-preset-console[data-appearance="day"] .dw2pc-q-jump,
+#dw2-preset-console[data-appearance="day"] .dw2pc-group-title,
+#dw2-preset-console[data-appearance="day"] .dw2pc-q-intro{
+  border-color:rgba(126,154,172,.20)!important;
 }
