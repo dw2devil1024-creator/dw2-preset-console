@@ -360,7 +360,7 @@ function showGroups() {
         header.append(name, count, arrow);
         wrap.append(header);
         const content = node('div', 'group-body');
-        const collapsed = !filter && (settings.groupCollapsed[group.id] ?? !!group.collapsed);
+        const collapsed = !filter && (settings.groupCollapsed[group.id] ?? (typeof group.collapsed === 'boolean' ? group.collapsed : !group.defaultOpen));
         content.hidden = collapsed;
         arrow.textContent = collapsed ? '⌄' : '⌃';
         header.setAttribute('aria-expanded', String(!collapsed));
