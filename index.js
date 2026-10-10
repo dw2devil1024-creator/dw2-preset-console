@@ -36,7 +36,8 @@ let open = false;
 let working = false;
 let lastSignature = '';
 let drag = null;
-let ignoredClick = false;
+let dragFrame = 0;
+let dragTarget = null;
 
 function loadPreferences() {
     try {
@@ -87,6 +88,7 @@ function presetSettings() {
     if (!Array.isArray(value.favorites)) value.favorites = [];
     if (!value.modes || typeof value.modes !== 'object') value.modes = { novel: '', world: '' };
     if (!value.groupCollapsed || typeof value.groupCollapsed !== 'object') value.groupCollapsed = {};
+    if (!value.regexCollapsed || typeof value.regexCollapsed !== 'object') value.regexCollapsed = {};
     return value;
 }
 
@@ -348,7 +350,14 @@ function showGroups() {
         const wrap = node('section', 'group-section');
         const header = button('', 'group-expand', () => {
             const visible = !content.hidden;
-            content.hidden = visible;
+            if (visible) {
+                content.hidden = true;
+                content.replaceChildren(); // Release hundreds of hidden controls
+            } else {
+                const fresh = promptItems().filter(x => x.groupId === group.id && x.name.toLocaleLowerCase().includes(needle));
+                content.replaceChildren(...fresh.map(x => itemRow(x, true)));
+                content.hidden = false;
+            }
             header.setAttribute('aria-expanded', String(!visible));
             arrow.textContent = visible ? '⌄' : '⌃';
             settings.groupCollapsed[group.id] = visible;
@@ -364,7 +373,7 @@ function showGroups() {
         content.hidden = collapsed;
         arrow.textContent = collapsed ? '⌄' : '⌃';
         header.setAttribute('aria-expanded', String(!collapsed));
-        groupItems.forEach(x => content.append(itemRow(x, true)));
+        if (!collapsed) groupItems.forEach(x => content.append(itemRow(x, true)));
         wrap.append(content);
         listArea.append(wrap);
     }
@@ -446,23 +455,62 @@ function showModes() {
 }
 
 function showRegex() {
-    let items = regexItems();
-    const allowedScoped = isScopedScriptsAllowed(characters?.[this_chid]);
-    const allowedPreset = isPresetScriptsAllowed(getCurrentPresetAPI(), getCurrentPresetName());
-    if (!allowedScoped || !allowedPreset) {
-        const note = node('p', 'help',
-            '来源权限提示：' + (!allowedScoped ? '角色正则未授权；' : '') +
-            (!allowedPreset ? '预设正则未授权。' : '') + '这里的单条开关不会自动开启来源权限。');
-        listArea.append(note);
+    const all = regexItems();
+    const needle = filter.toLocaleLowerCase();
+    const settings = presetSettings();
+    const groups = [
+        { type: SCRIPT_TYPES.GLOBAL, id: 'global', title: '全局正则', note: '全局生效的正则脚本' },
+        { type: SCRIPT_TYPES.PRESET, id: 'preset', title: '预设正则', note: '随当前预设切换的正则脚本' },
+        { type: SCRIPT_TYPES.SCOPED, id: 'scoped', title: '局部正则（角色）', note: '属于当前角色的正则脚本' },
+    ];
+    let any = false;
+    for (const group of groups) {
+        const matching = all.filter(x => x.type === group.type && x.name.toLocaleLowerCase().includes(needle));
+        if (!matching.length && filter) continue;
+        any = any || matching.length > 0;
+        const expanded = Boolean(filter) || settings.regexCollapsed[group.id] === false;
+        const wrap = node('section', 'group-section regex-group');
+        const content = node('div', 'group-body');
+        content.hidden = !expanded;
+
+        const header = button('', 'group-expand regex-group-expand', () => {
+            const isVisible = !content.hidden;
+            if (isVisible) {
+                content.hidden = true;
+                content.replaceChildren(); // Lazy mount on next expand
+            } else {
+                fillContent();
+                content.hidden = false;
+            }
+            settings.regexCollapsed[group.id] = isVisible;
+            header.setAttribute('aria-expanded', String(!isVisible));
+            arrow.textContent = isVisible ? '⌄' : '⌃';
+            savePreferences();
+        });
+        const name = node('span', 'group-heading', group.title);
+        const count = node('span', 'group-count', matching.filter(x => x.enabled).length + ' / ' + matching.length + ' 已启用');
+        const arrow = node('span', 'group-arrow', expanded ? '⌃' : '⌄');
+        header.append(name, count, arrow);
+        header.setAttribute('aria-expanded', String(expanded));
+
+        function fillContent() {
+            const permissionDenied = group.type === SCRIPT_TYPES.SCOPED
+                ? !isScopedScriptsAllowed(characters?.[this_chid])
+                : group.type === SCRIPT_TYPES.PRESET
+                    ? !isPresetScriptsAllowed(getCurrentPresetAPI(), getCurrentPresetName())
+                    : false;
+            if (permissionDenied) {
+                content.append(node('p', 'help regex-permission', '此来源目前未在 TT 中授权执行正则。单条 ON 不代表实际生效，请先在 TT 正则设置中启用对应来源。'));
+            }
+            if (!matching.length) content.append(empty('这里还没有正则脚本。'));
+            else matching.forEach(item => content.append(itemRow(item, false)));
+        }
+
+        wrap.append(header, content);
+        if (expanded) fillContent();
+        listArea.append(wrap);
     }
-    items = items.filter(x => x.name.toLocaleLowerCase().includes(filter.toLocaleLowerCase()));
-    const labels = ['全局', '角色', '预设'];
-    labels.forEach(label => {
-        const group = items.filter(x => x.label === label);
-        listArea.append(heading(label + '正则', group.length));
-        group.forEach(x => listArea.append(itemRow(x, false)));
-    });
-    if (!items.length) listArea.append(empty('没有找到匹配的正则脚本。'));
+    if (!any && filter) listArea.append(empty('没有找到匹配的正则脚本。'));
 }
 
 function render() {
@@ -527,9 +575,8 @@ function showPanel(yes) {
 function build() {
     root = node('div', 'root');
     root.id = ROOT_ID;
-    launcher = button('✧', 'launcher', () => {
-        if (ignoredClick) { ignoredClick = false; return; }
-        showPanel(!open);
+    launcher = button('✧', 'launcher', e => {
+        if (e.detail === 0) showPanel(!open); // keyboard / assistive input
     }, 'DW2 · Control');
     launcher.setAttribute('aria-label', '打开 DW2 预设控制台');
     launcher.setAttribute('aria-expanded', 'false');
@@ -573,40 +620,76 @@ function build() {
     panel.append(listArea);
 
     const foot = node('footer', 'footer');
-    foot.append(node('span', '', 'DW2 · CONTROL  /  v0.2.0'));
+    foot.append(node('span', '', 'DW2 · CONTROL  /  v0.2.1'));
     foot.append(button('⟳ 同步', 'refresh', () => render(), '重新读取当前状态'));
     panel.append(foot);
     root.append(panel);
     document.body.append(root);
 
-    // Pointer events cover mouse, touch and pen without separate ghost clicks.
+    // Mobile tap should be handled at pointerup rather than waiting for the
+    // platform's delayed/suppressed synthetic click. Keyboard/assistive click
+    // still works through the button's normal click handler.
     launcher.style.touchAction = 'none';
+
+    function moveLauncher(clientX, clientY) {
+        if (!drag) return;
+        const dx = clientX - drag.startX;
+        const dy = clientY - drag.startY;
+        launcher.style.left = Math.max(12, Math.min(drag.left + dx, innerWidth - launcher.offsetWidth - 12)) + 'px';
+        launcher.style.top = Math.max(12, Math.min(drag.top + dy, innerHeight - launcher.offsetHeight - 12)) + 'px';
+        if (open) placePanel();
+    }
+
     launcher.addEventListener('pointerdown', e => {
-        if (e.button !== 0) return;
-        drag = { id: e.pointerId, startX: e.clientX, startY: e.clientY,
-            left: launcher.offsetLeft, top: launcher.offsetTop, moved: false };
-        launcher.setPointerCapture(e.pointerId);
+        if (e.button !== 0 || drag) return;
+        drag = {
+            id: e.pointerId,
+            startX: e.clientX, startY: e.clientY,
+            left: launcher.offsetLeft, top: launcher.offsetTop, moved: false,
+        };
+        try { launcher.setPointerCapture(e.pointerId); } catch (_) {}
     });
     launcher.addEventListener('pointermove', e => {
         if (!drag || e.pointerId !== drag.id) return;
-        const dx = e.clientX - drag.startX, dy = e.clientY - drag.startY;
-        if (Math.hypot(dx, dy) > 6) drag.moved = true;
+        const dx = e.clientX - drag.startX;
+        const dy = e.clientY - drag.startY;
+        // 14px tolerates natural finger jitter; a stationary tap still opens.
+        if (Math.hypot(dx, dy) >= 14) drag.moved = true;
         if (!drag.moved) return;
-        launcher.style.left = Math.max(12, Math.min(drag.left + dx, innerWidth - 64)) + 'px';
-        launcher.style.top = Math.max(12, Math.min(drag.top + dy, innerHeight - 64)) + 'px';
-        if (open) placePanel();
+        dragTarget = { x: e.clientX, y: e.clientY };
+        if (!dragFrame) {
+            dragFrame = requestAnimationFrame(() => {
+                dragFrame = 0;
+                if (drag && dragTarget) moveLauncher(dragTarget.x, dragTarget.y);
+            });
+        }
     });
     launcher.addEventListener('pointerup', e => {
         if (!drag || e.pointerId !== drag.id) return;
-        if (drag.moved) {
-            ignoredClick = true;
+        const didDrag = drag.moved;
+        if (dragFrame) cancelAnimationFrame(dragFrame);
+        dragFrame = 0;
+        if (didDrag) {
+            moveLauncher(e.clientX, e.clientY);
             prefs.position = { x: launcher.offsetLeft, y: launcher.offsetTop };
             savePreferences();
         }
         drag = null;
+        dragTarget = null;
+        if (!didDrag) showPanel(!open);
     });
-    launcher.addEventListener('pointercancel', () => { drag = null; });
+    launcher.addEventListener('pointercancel', () => {
+        if (dragFrame) cancelAnimationFrame(dragFrame);
+        dragFrame = 0;
+        dragTarget = null;
+        drag = null;
+    });
+    launcher.addEventListener('click', e => {
+        // Suppress ordinary pointer-generated click; pointerup has handled it.
+        if (e.detail !== 0) e.preventDefault();
+    });
     placeLauncher();
+
     window.addEventListener('resize', () => { placeLauncher(); placePanel(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && open) showPanel(false); });
 
