@@ -1,0 +1,12 @@
+{
+  "display_name": "DW2 · Preset Console",
+  "loading_order": 92,
+  "requires": [],
+  "optional": [],
+  "js": "index.js",
+  "css": "style.css",
+  "author": "DW2",
+  "version": "0.2.0",
+  "minimum_client_version": "1.16.0",
+  "auto_update": false
+}
