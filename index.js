@@ -1,5 +1,6 @@
 /**
  * DW2 · Preset Console for TauriTavern
+ * Authors: 沈先生 × 阿黛 (DW2)
  * Isolated extension. No dependency on the Story Archive plugin.
  * Prompt switches operate on the active PromptManager order; regex switches
  * use TT's own persistence and refresh coordinator.
@@ -24,7 +25,7 @@ import { getRegexRefreshCoordinator } from '../../../tauri/perf/regex-refresh-co
 const NS = 'dw2pc';
 const ROOT_ID = 'dw2-preset-console';
 const SETTINGS_ID = 'dw2-preset-console-settings';
-const VERSION = '0.4.4';
+const VERSION = '0.4.5';
 const STORAGE_KEY = 'dw2.preset.console.v2';
 const CATEGORIES = [
     { id: 'quick', label: '快捷' },
@@ -820,6 +821,7 @@ function mountSettingsPanel() {
         icon.classList.toggle('down',!expand);
     });
     content.append(node('p','settings-hint','预设与正则悬浮控制台 · v'+VERSION));
+    content.append(node('p','settings-credit','联合制作 · 沈先生 × 阿黛'));
     const toggleRow=node('label','settings-toggle');
     const checkbox=node('input','settings-checkbox');
     checkbox.type='checkbox';
@@ -982,7 +984,7 @@ function build() {
     panel.append(listArea);
 
     const foot = node('footer', 'footer');
-    foot.append(node('span', '', 'DW2 · CONTROL  /  v0.4.4'));
+    foot.append(node('span', '', 'DW2 · CONTROL  /  v0.4.5'));
     const footActions = node('div', 'footer-actions');
     footActions.append(button('⟳ 刷新', 'refresh', () => render(), '重新读取当前状态'));
     saveButton = button('保存预设', 'save-preset', () => void saveActivePreset(), '执行 TT 原生「更新预设」操作');
