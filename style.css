@@ -1,0 +1,338 @@
+/* DW2 · Preset Console | Namespaced, light/glass, responsive */
+#dw2-preset-console {
+    --dw2pc-text: #f8f7f9;
+    --dw2pc-muted: #c7c6d2;
+    --dw2pc-pink: #ffe4e9;
+    --dw2pc-blue: #dbeefa;
+    position: fixed !important;
+    z-index: 2147483500 !important;
+    inset: 0;
+    width: 0 !important;
+    height: 0 !important;
+    font-family: "Noto Serif SC", "Songti SC", "STSong", serif !important;
+    color: var(--dw2pc-text) !important;
+    pointer-events: none;
+}
+#dw2-preset-console *, #dw2-preset-console *::before, #dw2-preset-console *::after {
+    box-sizing: border-box !important;
+}
+#dw2-preset-console button, #dw2-preset-console input, #dw2-preset-console select {
+    font-family: inherit !important;
+    letter-spacing: normal;
+}
+#dw2-preset-console .dw2pc-launcher {
+    pointer-events: auto !important;
+    position: fixed !important;
+    display: grid !important;
+    place-items: center !important;
+    width: 52px !important;
+    height: 52px !important;
+    padding: 0 !important;
+    border: 1px solid rgba(255, 255, 255, .62) !important;
+    border-radius: 50% !important;
+    color: #ffffff !important;
+    font-family: Georgia, serif !important;
+    font-size: 32px !important;
+    line-height: 1 !important;
+    background: linear-gradient(135deg, rgba(216,226,239,.83), rgba(227,196,207,.73)) !important;
+    box-shadow: 0 7px 28px rgba(32,28,50,.22), inset 0 0 16px rgba(255,255,255,.35) !important;
+    backdrop-filter: blur(18px) saturate(120%);
+    -webkit-backdrop-filter: blur(18px) saturate(120%);
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+}
+#dw2-preset-console .dw2pc-launcher:active { cursor: grabbing; }
+#dw2-preset-console .dw2pc-launcher:focus-visible {
+    outline: 2px solid #f9d7e4 !important;
+    outline-offset: 3px !important;
+}
+#dw2-preset-console .dw2pc-panel {
+    position: fixed !important;
+    display: flex !important;
+    flex-direction: column !important;
+    pointer-events: auto !important;
+    width: min(370px, calc(100vw - 20px)) !important;
+    height: min(610px, calc(100dvh - 25px)) !important;
+    max-height: calc(100dvh - 25px) !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(255,255,255,.27) !important;
+    border-radius: 12px !important;
+    background: linear-gradient(158deg, rgba(66,75,94,.94), rgba(41,47,63,.96) 56%, rgba(57,49,66,.96)) !important;
+    color: var(--dw2pc-text) !important;
+    box-shadow: 0 20px 65px rgba(10,13,25,.36) !important;
+    backdrop-filter: blur(24px) saturate(128%);
+    -webkit-backdrop-filter: blur(24px) saturate(128%);
+    animation: dw2pc-arrive .16s ease-out both;
+}
+#dw2-preset-console .dw2pc-panel[hidden] { display: none !important; }
+@keyframes dw2pc-arrive {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+#dw2-preset-console .dw2pc-header {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 20px 19px 15px;
+    border-bottom: 1px solid rgba(255,255,255,.14);
+}
+#dw2-preset-console .dw2pc-eyebrow {
+    color: var(--dw2pc-pink);
+    font-family: Georgia, serif !important;
+    font-size: 9px;
+    letter-spacing: .24em;
+    font-weight: 500;
+}
+#dw2-preset-console .dw2pc-title {
+    margin: 6px 0 3px;
+    color: #fff;
+    font-family: Georgia, serif !important;
+    font-size: 24px;
+    letter-spacing: .01em;
+}
+#dw2-preset-console .dw2pc-source-status {
+    max-width: 260px;
+    overflow: hidden;
+    color: var(--dw2pc-muted);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+#dw2-preset-console .dw2pc-close {
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none !important;
+    background: transparent !important;
+    color: #f8e4e8 !important;
+    font-size: 25px;
+    cursor: pointer;
+}
+#dw2-preset-console .dw2pc-tabs {
+    display: grid;
+    grid-template-columns: repeat(5,minmax(0,1fr));
+    gap: 3px;
+    padding: 12px 15px 8px;
+    flex: 0 0 auto;
+}
+#dw2-preset-console .dw2pc-tab {
+    padding: 8px 2px !important;
+    min-width: 0;
+    border: 1px solid transparent !important;
+    border-radius: 5px !important;
+    background: transparent !important;
+    color: var(--dw2pc-muted) !important;
+    font-size: 12px !important;
+    cursor: pointer;
+}
+#dw2-preset-console .dw2pc-tab.is-active {
+    background: rgba(255,229,237,.14) !important;
+    border-color: rgba(255,225,237,.29) !important;
+    color: #fff !important;
+}
+#dw2-preset-console .dw2pc-search-wrap { padding: 0 15px 8px; flex: 0 0 auto; }
+#dw2-preset-console .dw2pc-search {
+    width: 100% !important;
+    height: 34px !important;
+    padding: 6px 12px !important;
+    border: 1px solid rgba(255,255,255,.19) !important;
+    border-radius: 4px !important;
+    background: rgba(255,255,255,.065) !important;
+    box-shadow: none !important;
+    color: #fff !important;
+    font-size: 12px !important;
+}
+#dw2-preset-console .dw2pc-search::placeholder { color: rgba(237,230,240,.65); }
+#dw2-preset-console .dw2pc-search[hidden] { display: none !important; }
+#dw2-preset-console .dw2pc-list {
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 0 15px 14px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,.24) transparent;
+}
+#dw2-preset-console .dw2pc-group-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin: 14px 0 6px;
+    padding: 0 1px 7px;
+    border-bottom: 1px solid rgba(255,255,255,.13);
+    color: #ffedf2;
+    font-size: 12px;
+    letter-spacing: .06em;
+}
+#dw2-preset-console .dw2pc-group-count { color: var(--dw2pc-muted); font-size: 10px; }
+#dw2-preset-console .dw2pc-item {
+    display: flex;
+    gap: 7px;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 45px;
+    padding: 8px 4px;
+    border-bottom: 1px solid rgba(255,255,255,.065);
+}
+#dw2-preset-console .dw2pc-item-detail { flex: 1 1 auto; min-width: 0; }
+#dw2-preset-console .dw2pc-item-name {
+    color: #fdfbfc;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: normal;
+    word-break: break-word;
+}
+#dw2-preset-console .dw2pc-item-source { color: var(--dw2pc-muted); font-size: 9px; }
+#dw2-preset-console .dw2pc-favorite {
+    flex: 0 0 25px;
+    min-width: 0 !important;
+    padding: 2px !important;
+    border: none !important;
+    color: #ffe2ea !important;
+    background: transparent !important;
+    font-size: 19px !important;
+    cursor: pointer;
+}
+#dw2-preset-console .dw2pc-switch {
+    flex: 0 0 43px;
+    min-height: 25px;
+    padding: 3px 4px !important;
+    border: 1px solid rgba(255,255,255,.24) !important;
+    border-radius: 20px !important;
+    background: rgba(255,255,255,.06) !important;
+    color: #d5d1d9 !important;
+    font-family: Arial,sans-serif !important;
+    font-size: 10px !important;
+    font-weight: 600;
+    cursor: pointer;
+}
+#dw2-preset-console .dw2pc-switch.is-on {
+    border-color: rgba(255,225,234,.55) !important;
+    color: #ffe7ef !important;
+    background: rgba(251,209,228,.18) !important;
+}
+#dw2-preset-console .dw2pc-switch:disabled { opacity: .5; cursor: wait; }
+#dw2-preset-console .dw2pc-empty {
+    padding: 38px 12px;
+    color: var(--dw2pc-muted);
+    font-size: 12px;
+    line-height: 1.9;
+    text-align: center;
+}
+#dw2-preset-console .dw2pc-help {
+    padding: 0 3px;
+    color: var(--dw2pc-muted);
+    font-size: 11px;
+    line-height: 1.85;
+}
+#dw2-preset-console .dw2pc-mode-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding: 10px 0;
+}
+#dw2-preset-console .dw2pc-mode-label {
+    font-size: 12px;
+    color: #ffe7f1;
+}
+#dw2-preset-console .dw2pc-mode-select {
+    width: 100%;
+    min-height: 38px;
+    padding: 7px 10px !important;
+    border: 1px solid rgba(255,255,255,.22) !important;
+    border-radius: 4px !important;
+    background: #515569 !important;
+    color: #fff !important;
+    font-size: 12px !important;
+}
+#dw2-preset-console .dw2pc-mode-actions {
+    display: grid;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 8px;
+    margin: 15px 0;
+}
+#dw2-preset-console .dw2pc-mode-button {
+    min-width: 0;
+    padding: 11px 5px !important;
+    border: 1px solid rgba(255,225,235,.4) !important;
+    border-radius: 5px !important;
+    background: rgba(255,229,237,.14) !important;
+    color: #ffe6ed !important;
+    font-size: 11px !important;
+    cursor: pointer;
+}
+#dw2-preset-console .dw2pc-footer {
+    display: flex;
+    flex: 0 0 auto;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 17px calc(10px + env(safe-area-inset-bottom, 0px) / 3);
+    border-top: 1px solid rgba(255,255,255,.13);
+    color: var(--dw2pc-muted);
+    font-family: Georgia,serif !important;
+    font-size: 10px;
+    letter-spacing: .08em;
+}
+#dw2-preset-console .dw2pc-refresh {
+    padding: 3px 0 !important;
+    border: none !important;
+    background: transparent !important;
+    color: var(--dw2pc-blue) !important;
+    font-size: 11px !important;
+    cursor: pointer;
+}
+@media (max-width: 500px) {
+    #dw2-preset-console .dw2pc-panel {
+        width: min(350px, calc(100vw - 20px)) !important;
+        height: min(580px, calc(100dvh - 30px)) !important;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    #dw2-preset-console .dw2pc-panel { animation: none !important; }
+}
+
+/* Adaptive group hierarchy from the active preset metadata */
+#dw2-preset-console .dw2pc-group-section {
+    margin: 8px 0 10px;
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 7px;
+    background: rgba(255,255,255,.035);
+    overflow: hidden;
+}
+#dw2-preset-console .dw2pc-group-expand {
+    width: 100% !important;
+    min-height: 43px;
+    padding: 10px 10px !important;
+    display: flex !important;
+    gap: 8px;
+    align-items: center;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: rgba(255,255,255,.055) !important;
+    color: #fff4f6 !important;
+    text-align: left !important;
+    font-size: 11px !important;
+    cursor: pointer;
+}
+#dw2-preset-console .dw2pc-group-heading {
+    flex: 1;
+    min-width: 0;
+    line-height: 1.7;
+    word-break: break-word;
+}
+#dw2-preset-console .dw2pc-group-arrow {
+    flex: 0 0 auto;
+    color: #fee3ea;
+    font-size: 15px;
+}
+#dw2-preset-console .dw2pc-group-body { padding: 0 8px; }
+#dw2-preset-console .dw2pc-group-body[hidden] { display: none !important; }
+#dw2-preset-console .dw2pc-item.is-protected { opacity: .82; }
+#dw2-preset-console .dw2pc-protected {
+    flex: 0 0 auto;
+    font-size: 10px;
+    color: #f0cfdc;
+}
