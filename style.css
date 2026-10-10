@@ -165,7 +165,8 @@
 }
 #dw2-preset-console .dw2pc-search::placeholder,
 #dw2-preset-console .dw2pc-q-search::placeholder{color:rgba(221,221,225,.41)!important;}
-#dw2-preset-console .dw2pc-search[hidden]{display:none!important;}
+#dw2-preset-console .dw2pc-search[hidden],
+#dw2-preset-console .dw2pc-search-wrap[hidden]{display:none!important;}
 #dw2-preset-console .dw2pc-list{
   flex:0 1 auto;
   min-height:0;
@@ -240,7 +241,8 @@
 #dw2-preset-console .dw2pc-group-count,
 #dw2-preset-console .dw2pc-regex-subgroup-count{
   color:var(--dw2pc-muted);
-  font:10px/1.4 inherit;
+  font-size:10px;
+  line-height:1.4;
   font-variant-numeric:tabular-nums;
 }
 #dw2-preset-console .dw2pc-group-arrow,
