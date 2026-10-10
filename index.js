@@ -5,8 +5,10 @@
  * use TT's own persistence and refresh coordinator.
  */
 import { promptManager } from '../../../openai.js';
+import { extension_settings, extensionTypes, openThirdPartyExtensionMenu } from '../../extensions.js';
+import { getPresetManager } from '../../../preset-manager.js';
 import { ZHIJIE_GROUPS, ZHIJIE_PROMPT_GROUP_IDS } from './groupMap.js';
-import { characters, eventSource, event_types, this_chid } from '../../../../script.js';
+import { characters, eventSource, event_types, this_chid, getRequestHeaders } from '../../../../script.js';
 import {
     getScriptsByType,
     saveScriptsByType,
@@ -20,6 +22,8 @@ import { getRegexRefreshCoordinator } from '../../../tauri/perf/regex-refresh-co
 
 const NS = 'dw2pc';
 const ROOT_ID = 'dw2-preset-console';
+const SETTINGS_ID = 'dw2-preset-console-settings';
+const VERSION = '0.2.2';
 const STORAGE_KEY = 'dw2.preset.console.v2';
 const CATEGORIES = [
     { id: 'groups', label: '分组' },
@@ -38,6 +42,8 @@ let lastSignature = '';
 let drag = null;
 let dragFrame = 0;
 let dragTarget = null;
+let settingsAttempts = 0;
+let updateInProgress = false;
 
 function loadPreferences() {
     try {
@@ -45,9 +51,10 @@ function loadPreferences() {
         return {
             position: data.position && Number.isFinite(data.position.x) && Number.isFinite(data.position.y) ? data.position : null,
             byPreset: data.byPreset && typeof data.byPreset === 'object' ? data.byPreset : {},
+            floatingVisible: data.floatingVisible !== false,
         };
     } catch (_) {
-        return { position: null, byPreset: {} };
+        return { position: null, byPreset: {}, floatingVisible: true };
     }
 }
 
@@ -89,6 +96,7 @@ function presetSettings() {
     if (!value.modes || typeof value.modes !== 'object') value.modes = { novel: '', world: '' };
     if (!value.groupCollapsed || typeof value.groupCollapsed !== 'object') value.groupCollapsed = {};
     if (!value.regexCollapsed || typeof value.regexCollapsed !== 'object') value.regexCollapsed = {};
+    if (!value.regexSubgroupCollapsed || typeof value.regexSubgroupCollapsed !== 'object') value.regexSubgroupCollapsed = {};
     return value;
 }
 
@@ -287,6 +295,7 @@ function currentSignature() {
         presetIdentity(),
         entries.map(x => [x.id, x.name, x.enabled, x.groupId]),
         regex.map(x => [x.type, x.id, x.name, x.enabled]),
+        tab === 'regex' ? regexGroupFingerprint() : null,
         tab, filter,
     ]);
 }
@@ -454,63 +463,125 @@ function showModes() {
     listArea.append(node('p', 'help', '不同版本可能有不同名称；匹配不到时可手动绑定。切换身份后仍建议检查开关状态。'));
 }
 
+// Read-only bridge to BaiBai Toolkit's custom regex folders.
+function getCustomRegexGroups(type) {
+    const api = getCurrentPresetAPI(), preset = getCurrentPresetName();
+    const key = type === SCRIPT_TYPES.GLOBAL ? 'global'
+        : type === SCRIPT_TYPES.SCOPED ? 'scoped:'+(characters?.[this_chid]?.avatar||'none')
+        : 'preset:'+(api||'unknown')+':'+(preset||'unknown');
+    let state = extension_settings?.baiBaiToolkit?.regexListGroups?.scopes?.[key];
+    if ((!state || !Array.isArray(state.groups)) && type === SCRIPT_TYPES.PRESET) {
+        try {
+            const portable = getPresetManager(api)?.readPresetExtensionField({
+                name: preset, path: 'baibaiToolkit.regexGroups',
+            });
+            if (Number(portable?.version) === 1) state = portable;
+        } catch (e) { console.debug('[DW2 Control] Portable regex group unavailable',e); }
+    }
+    if (!Array.isArray(state?.groups) || !state?.scripts || typeof state.scripts !== 'object') return null;
+    const groups = state.groups.filter(x=>x&&x.id)
+        .sort((a,b)=>(Number(a.order)||0)-(Number(b.order)||0))
+        .map(x=>({id:String(x.id),name:String(x.name||'未命名分组'),collapsed:!!x.collapsed}));
+    const groupIds = new Set(groups.map(x=>x.id));
+    return {
+        key, groups:[...groups,{
+            id:'__ungrouped',
+            name:String(state.ungrouped?.name||'默认分组'),
+            collapsed:!!state.ungrouped?.collapsed,
+        }],
+        groupFor(id) {
+            const assigned = state.scripts[id]?.groupId;
+            return groupIds.has(assigned) ? assigned : '__ungrouped';
+        },
+    };
+}
+function regexGroupFingerprint() {
+    return [SCRIPT_TYPES.GLOBAL, SCRIPT_TYPES.PRESET, SCRIPT_TYPES.SCOPED].map(type=>{
+        const data = getCustomRegexGroups(type);
+        if (!data) return null;
+        return [data.key,data.groups.map(x=>[x.id,x.name,x.collapsed]),
+            regexItems().filter(x=>x.type===type).map(x=>[x.id,data.groupFor(x.id)])];
+    });
+}
+
 function showRegex() {
     const all = regexItems();
     const needle = filter.toLocaleLowerCase();
     const settings = presetSettings();
-    const groups = [
-        { type: SCRIPT_TYPES.GLOBAL, id: 'global', title: '全局正则', note: '全局生效的正则脚本' },
-        { type: SCRIPT_TYPES.PRESET, id: 'preset', title: '预设正则', note: '随当前预设切换的正则脚本' },
-        { type: SCRIPT_TYPES.SCOPED, id: 'scoped', title: '局部正则（角色）', note: '属于当前角色的正则脚本' },
+    const sources = [
+        {type: SCRIPT_TYPES.GLOBAL,id:'global',name:'全局正则'},
+        {type: SCRIPT_TYPES.PRESET,id:'preset',name:'预设正则'},
+        {type: SCRIPT_TYPES.SCOPED,id:'scoped',name:'局部正则（角色）'},
     ];
-    let any = false;
-    for (const group of groups) {
-        const matching = all.filter(x => x.type === group.type && x.name.toLocaleLowerCase().includes(needle));
-        if (!matching.length && filter) continue;
-        any = any || matching.length > 0;
-        const expanded = Boolean(filter) || settings.regexCollapsed[group.id] === false;
-        const wrap = node('section', 'group-section regex-group');
-        const content = node('div', 'group-body');
-        content.hidden = !expanded;
-
-        const header = button('', 'group-expand regex-group-expand', () => {
-            const isVisible = !content.hidden;
-            if (isVisible) {
-                content.hidden = true;
-                content.replaceChildren(); // Lazy mount on next expand
-            } else {
-                fillContent();
-                content.hidden = false;
-            }
-            settings.regexCollapsed[group.id] = isVisible;
-            header.setAttribute('aria-expanded', String(!isVisible));
-            arrow.textContent = isVisible ? '⌄' : '⌃';
+    let matched = 0;
+    const appendRows = (rows,target)=>{
+        if (!rows.length) target.append(empty('这个分组暂无正则。'));
+        else rows.forEach(item=>target.append(itemRow(item,false)));
+    };
+    for (const source of sources) {
+        const scripts = all.filter(x=>x.type===source.type && x.name.toLocaleLowerCase().includes(needle));
+        if (filter && !scripts.length) continue;
+        matched+=scripts.length;
+        const custom = getCustomRegexGroups(source.type);
+        const expanded = !!filter || settings.regexCollapsed[source.id] === false;
+        const section = node('section','group-section regex-group');
+        const content = node('div','group-body');
+        content.hidden=!expanded;
+        const title = button('','group-expand regex-group-expand',()=>{
+            const visible=!content.hidden;
+            if (visible){content.hidden=true;content.replaceChildren();}
+            else {drawContents();content.hidden=false;}
+            settings.regexCollapsed[source.id]=visible;
+            title.setAttribute('aria-expanded',String(!visible));
+            arrow.textContent=visible?'⌄':'⌃';
             savePreferences();
         });
-        const name = node('span', 'group-heading', group.title);
-        const count = node('span', 'group-count', matching.filter(x => x.enabled).length + ' / ' + matching.length + ' 已启用');
-        const arrow = node('span', 'group-arrow', expanded ? '⌃' : '⌄');
-        header.append(name, count, arrow);
-        header.setAttribute('aria-expanded', String(expanded));
-
-        function fillContent() {
-            const permissionDenied = group.type === SCRIPT_TYPES.SCOPED
+        title.append(node('span','group-heading',source.name));
+        title.append(node('span','group-count',scripts.filter(x=>x.enabled).length+' / '+scripts.length+' 已启用'));
+        const arrow = node('span','group-arrow',expanded?'⌃':'⌄');
+        title.append(arrow);
+        title.setAttribute('aria-expanded',String(expanded));
+        section.append(title,content);
+        function drawContents(){
+            content.replaceChildren();
+            const disallowed= source.type===SCRIPT_TYPES.SCOPED
                 ? !isScopedScriptsAllowed(characters?.[this_chid])
-                : group.type === SCRIPT_TYPES.PRESET
-                    ? !isPresetScriptsAllowed(getCurrentPresetAPI(), getCurrentPresetName())
+                : source.type===SCRIPT_TYPES.PRESET
+                    ? !isPresetScriptsAllowed(getCurrentPresetAPI(),getCurrentPresetName())
                     : false;
-            if (permissionDenied) {
-                content.append(node('p', 'help regex-permission', '此来源目前未在 TT 中授权执行正则。单条 ON 不代表实际生效，请先在 TT 正则设置中启用对应来源。'));
+            if(disallowed)content.append(node('p','help regex-permission','此来源尚未在 TT 授权执行；ON 只表示单条启用，不代表已生效。'));
+            if(!custom) {appendRows(scripts,content);return;}
+            for(const group of custom.groups){
+                const members=scripts.filter(x=>custom.groupFor(x.id)===group.id);
+                if(filter&&!members.length)continue;
+                const prefKey=custom.key+'/'+group.id;
+                const collapsed=!filter&&(settings.regexSubgroupCollapsed[prefKey] ?? group.collapsed);
+                const wrap=node('div','regex-subgroup');
+                const body=node('div','regex-subgroup-body');
+                body.hidden=collapsed;
+                const head=button('','regex-subgroup-header',()=>{
+                    const wasOpen=!body.hidden;
+                    if(wasOpen){body.hidden=true;body.replaceChildren();}
+                    else {appendRows(members,body);body.hidden=false;}
+                    settings.regexSubgroupCollapsed[prefKey]=wasOpen;
+                    chevron.textContent=wasOpen?'⌄':'⌃';
+                    head.setAttribute('aria-expanded',String(!wasOpen));
+                    savePreferences();
+                });
+                head.append(node('span','regex-subgroup-name',group.name));
+                head.append(node('span','regex-subgroup-count',String(members.length)));
+                const chevron=node('span','regex-subgroup-arrow',collapsed?'⌄':'⌃');
+                head.append(chevron);
+                head.setAttribute('aria-expanded',String(!collapsed));
+                wrap.append(head,body);
+                if(!collapsed)appendRows(members,body);
+                content.append(wrap);
             }
-            if (!matching.length) content.append(empty('这里还没有正则脚本。'));
-            else matching.forEach(item => content.append(itemRow(item, false)));
         }
-
-        wrap.append(header, content);
-        if (expanded) fillContent();
-        listArea.append(wrap);
+        if(expanded)drawContents();
+        listArea.append(section);
     }
-    if (!any && filter) listArea.append(empty('没有找到匹配的正则脚本。'));
+    if(filter&&!matched)listArea.append(empty('未找到匹配的正则。'));
 }
 
 function render() {
@@ -620,7 +691,7 @@ function build() {
     panel.append(listArea);
 
     const foot = node('footer', 'footer');
-    foot.append(node('span', '', 'DW2 · CONTROL  /  v0.2.1'));
+    foot.append(node('span', '', 'DW2 · CONTROL  /  v0.2.2'));
     foot.append(button('⟳ 同步', 'refresh', () => render(), '重新读取当前状态'));
     panel.append(foot);
     root.append(panel);
