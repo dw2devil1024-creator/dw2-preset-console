@@ -25,7 +25,7 @@ import { getRegexRefreshCoordinator } from '../../../tauri/perf/regex-refresh-co
 const NS = 'dw2pc';
 const ROOT_ID = 'dw2-preset-console';
 const SETTINGS_ID = 'dw2-preset-console-settings';
-const VERSION = '0.4.8';
+const VERSION = '0.4.9';
 const STORAGE_KEY = 'dw2.preset.console.v2';
 const CATEGORIES = [
     { id: 'quick', label: '快捷' },
@@ -409,7 +409,20 @@ function showGroups() {
     const settings = presetSettings();
     const claimed = new Set();
     const needle = filter.toLocaleLowerCase();
-    for (const group of data.groups) {
+    // Resource Library places its native folder headers at the first prompt in
+    // TT's current order. Match that order, not the folder creation order.
+    // Keep one floating section per logical folder, even when TT's physical
+    // prompt list contains separate runs of the same folder.
+    const groupById = new Map(data.groups.map(g => [g.id, g]));
+    const seen = new Set();
+    const nativeOrderedGroups = [];
+    for (const item of items) {
+        const id = item.groupId;
+        if (!id || !groupById.has(id) || seen.has(id)) continue;
+        seen.add(id);
+        nativeOrderedGroups.push(groupById.get(id));
+    }
+    for (const group of nativeOrderedGroups) {
         const groupItems = items.filter(x => x.groupId === group.id && x.name.toLocaleLowerCase().includes(needle));
         if (!groupItems.length && filter) continue;
         items.filter(x => x.groupId === group.id).forEach(x => claimed.add(x.id));
@@ -1027,7 +1040,7 @@ function build() {
     panel.append(listArea);
 
     const foot = node('footer', 'footer');
-    foot.append(node('span', '', 'DW2 · CONTROL  /  v0.4.6'));
+    foot.append(node('span', '', 'DW2 · CONTROL  /  v' + VERSION));
     const footActions = node('div', 'footer-actions');
     footActions.append(button('⟳ 刷新', 'refresh', () => render(), '重新读取当前状态'));
     saveButton = button('保存预设', 'save-preset', () => void saveActivePreset(), '执行 TT 原生「更新预设」操作');
