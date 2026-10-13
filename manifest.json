@@ -3,10 +3,10 @@
   "loading_order": 92,
   "requires": [],
   "optional": [],
-  "js": "index.js?v=0.4.11",
-  "css": "style.css?v=0.4.11",
+  "js": "index.js?v=0.4.12",
+  "css": "style.css?v=0.4.12",
   "author": "S.A. · DW2",
-  "version": "0.4.11",
+  "version": "0.4.12",
   "minimum_client_version": "1.16.0",
   "auto_update": false
 }
