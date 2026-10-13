@@ -108,13 +108,24 @@ function resourceLibraryPromptGroups() {
     // TT's main preset page is grouped by Resource Library when this switch is on.
     // Prefer its live read-only metadata over retired BaiBai/legacy mappings.
     try {
-        const resource = globalThis.SillyTavern?.getContext?.()?.extensionSettings
-            ?.dw2ResourceLibrary ?? extension_settings?.dw2ResourceLibrary;
-        if (resource?.promptFoldersEnabled !== true) return null;
-        const name = getPresetManager('openai')?.getSelectedPresetName?.()
-            || getCurrentPresetName();
-        if (!name) return null;
-        const record = resource.promptFolders?.[name];
+        // Prefer the live normalized state from Resource Library. Its in-memory
+        // copy may differ from TT's extensionSettings until the first folder
+        // edit is saved, which previously made the Quick tab seem empty.
+        const live = globalThis.DW2ResourceLibrary?.getPromptFolderSnapshot?.();
+        let record;
+        if (live) {
+            if (live.enabled !== true || !live.presetName) return null;
+            record = live;
+        } else {
+            // Startup fallback before Resource Library finishes loading.
+            const resource = globalThis.SillyTavern?.getContext?.()?.extensionSettings
+                ?.dw2ResourceLibrary ?? extension_settings?.dw2ResourceLibrary;
+            if (resource?.promptFoldersEnabled !== true) return null;
+            const name = getPresetManager('openai')?.getSelectedPresetName?.()
+                || getCurrentPresetName();
+            if (!name) return null;
+            record = resource.promptFolders?.[name];
+        }
         const validIds = new Set((promptManager?.serviceSettings?.prompts || [])
             .map(p => p?.identifier).filter(Boolean));
         const groups = [], known = new Set();
@@ -1113,6 +1124,11 @@ function build() {
         event_types?.CHARACTER_EDITED, event_types?.CHATCOMPLETION_MODEL_CHANGED,
     ].filter(Boolean);
     refreshEvents.forEach(type => eventSource.on(type, () => setTimeout(refreshIfChanged, 400)));
+    // Resource Library may initialize after this console because its extension
+    // loading order is later. Refresh on ready and on explicit folder changes.
+    for (const type of ['dw2rl-prompt-folders-ready','dw2rl-prompt-folders-changed']) {
+        window.addEventListener(type, refreshIfChanged);
+    }
     // Native TT click handlers update the PromptManager order before bubbling here.
     document.addEventListener('click', e => {
         if (open && !working && e.target?.closest?.('#completion_prompt_manager_list .prompt-manager-toggle-action')) {
