@@ -167,7 +167,7 @@ export function createQuickStudio(deps) {
             return;
         }
         if(!groupBy('通用文风库') && !folderSpecs.some(s=>groupBy(s.needle))) {
-            listArea.append(node('div','q-warning','当前预设没有匹配《织界》快捷设置，原始分组不会受到影响。'));
+            listArea.append(node('div','q-warning','暂未读到快捷页需要的文风／写作指导分组。请检查资源库的提示词分组是否启用，或等待预设加载；不需要移动条目来刷新。'));
             listArea.append(button('打开全部','q-jump',()=>goToTab('all')));
             return;
         }
