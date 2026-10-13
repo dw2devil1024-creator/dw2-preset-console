@@ -8,7 +8,6 @@
 import { promptManager } from '../../../openai.js';
 import { extension_settings, extensionTypes, openThirdPartyExtensionMenu } from '../../../extensions.js';
 import { getPresetManager } from '../../../preset-manager.js';
-import { ZHIJIE_GROUPS, ZHIJIE_PROMPT_GROUP_IDS } from './groupMap.js';
 import { createQuickStudio } from './quickStudio.js';
 import { characters, eventSource, event_types, this_chid, getRequestHeaders } from '../../../../script.js';
 import {
@@ -25,7 +24,7 @@ import { getRegexRefreshCoordinator } from '../../../tauri/perf/regex-refresh-co
 const NS = 'dw2pc';
 const ROOT_ID = 'dw2-preset-console';
 const SETTINGS_ID = 'dw2-preset-console-settings';
-const VERSION = '0.4.9';
+const VERSION = '0.4.10';
 const STORAGE_KEY = 'dw2.preset.console.v2';
 const CATEGORIES = [
     { id: 'quick', label: '快捷' },
@@ -139,30 +138,9 @@ function resourceLibraryPromptGroups() {
 }
 
 function presetGroupData() {
-    const shared = resourceLibraryPromptGroups();
-    if (shared) return shared;
-    // Group data is part of the actual current preset whenever TT exposes it.
-    // For the original 织界 v6.58 we can also map against identifiers in the
-    // public, *name-and-ID-only* groupMap.js without publishing prompt bodies.
-    const settings = promptManager?.serviceSettings;
-    const native = settings?.extensions?.baibaiToolkit?.presetPromptGroups;
-    if (Array.isArray(native?.groups) && native?.prompts &&
-        typeof native.prompts === 'object') {
-        return {
-            groups: native.groups.slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
-            assigned: native.prompts,
-        };
-    }
-    const prompts = settings?.prompts;
-    if (!Array.isArray(prompts)) return { groups: [], assigned: {} };
-    const overlap = prompts.filter(p => p && ZHIJIE_PROMPT_GROUP_IDS[p.identifier]).length;
-    if (overlap < Math.max(3, Math.floor(prompts.length * 0.35))) {
-        return { groups: [], assigned: {} };
-    }
-    const assigned = Object.fromEntries(
-        Object.entries(ZHIJIE_PROMPT_GROUP_IDS).map(([id, groupId]) => [id, { groupId }])
-    );
-    return { groups: ZHIJIE_GROUPS.slice().sort((a,b) => a.order - b.order), assigned };
+    // Never resurrect legacy BaiBai groups or old fixed ZHIJIE mappings.
+    // Only read live DW2 Resource Library grouping for this preset.
+    return resourceLibraryPromptGroups() || { groups: [], assigned: {} };
 }
 
 function isProtectedPrompt(item) {
