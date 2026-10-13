@@ -15,7 +15,21 @@ export function createQuickStudio(deps) {
         { id:'viewpoint', needle:'视角与落点｜沉浸镜头·小说叙事',
           name:'视角与落点', subtitle:'镜头 · 落点 · 对话 · 人称' },
     ];
-    const groupBy = phrase => presetGroupData().groups.find(g=>g.name.includes(phrase));
+    function groupBy(phrase) {
+        const groups=presetGroupData().groups;
+        const exact=groups.find(g=>String(g.name||'').includes(phrase));
+        if(exact)return exact;
+        // Older/newer 织界 editions use slightly different subtitles.
+        // Only accept unambiguous, unmistakable folder-name aliases.
+        const candidates=groups.filter(group=>{
+            const name=String(group.name||'').replace(/[\s｜|·・—_-]/g,'');
+            if(phrase==='通用文风库')return /通用文风|文风库/.test(name);
+            if(phrase.startsWith('写作指导'))return name.includes('写作指导');
+            if(phrase.startsWith('视角与落点'))return name.includes('视角与落点');
+            return false;
+        });
+        return candidates.length===1?candidates[0]:null;
+    }
 
     function getStyles(items) {
         const group = groupBy('通用文风库');
