@@ -25,7 +25,7 @@ import { getRegexRefreshCoordinator } from '../../../tauri/perf/regex-refresh-co
 const NS = 'dw2pc';
 const ROOT_ID = 'dw2-preset-console';
 const SETTINGS_ID = 'dw2-preset-console-settings';
-const VERSION = '0.4.7';
+const VERSION = '0.4.8';
 const STORAGE_KEY = 'dw2.preset.console.v2';
 const CATEGORIES = [
     { id: 'quick', label: '快捷' },
@@ -105,7 +105,42 @@ function presetSettings() {
     return value;
 }
 
+function resourceLibraryPromptGroups() {
+    // TT's main preset page is grouped by Resource Library when this switch is on.
+    // Prefer its live read-only metadata over retired BaiBai/legacy mappings.
+    try {
+        const resource = globalThis.SillyTavern?.getContext?.()?.extensionSettings
+            ?.dw2ResourceLibrary ?? extension_settings?.dw2ResourceLibrary;
+        if (resource?.promptFoldersEnabled !== true) return null;
+        const name = getPresetManager('openai')?.getSelectedPresetName?.()
+            || getCurrentPresetName();
+        if (!name) return null;
+        const record = resource.promptFolders?.[name];
+        const validIds = new Set((promptManager?.serviceSettings?.prompts || [])
+            .map(p => p?.identifier).filter(Boolean));
+        const groups = [], known = new Set();
+        for (const item of Array.isArray(record?.groups) ? record.groups : []) {
+            const id = String(item?.id || '').trim();
+            const label = String(item?.name || '').trim();
+            if (!id || !label || known.has(id)) continue;
+            known.add(id);
+            groups.push({ id, name: label, order: groups.length, defaultOpen: true });
+        }
+        const assigned = {};
+        for (const [id, groupId] of Object.entries(record?.entries || {})) {
+            if (validIds.has(id) && known.has(groupId)) assigned[id] = { groupId };
+        }
+        // Return empty groups too: deleting all folders must NOT resurrect old ones.
+        return { groups, assigned };
+    } catch (error) {
+        console.debug('[DW2 Control] Resource Library grouping unavailable', error);
+        return null;
+    }
+}
+
 function presetGroupData() {
+    const shared = resourceLibraryPromptGroups();
+    if (shared) return shared;
     // Group data is part of the actual current preset whenever TT exposes it.
     // For the original 织界 v6.58 we can also map against identifiers in the
     // public, *name-and-ID-only* groupMap.js without publishing prompt bodies.
@@ -159,7 +194,7 @@ function promptItems() {
             id: entry.identifier,
             name: title,
             key: title + '#' + occurrence,
-            enabled: entry.enabled !== false,
+            enabled: entry.enabled === true,
             marker: !!prompt.marker,
             system: !!prompt.system_prompt,
             entry,
@@ -298,9 +333,11 @@ function currentSignature() {
     if (tab === 'regex') {
         try { regex = regexItems(); } catch (_) {}
     }
+    const grouping = presetGroupData();
     return JSON.stringify([
         presetIdentity(),
         entries.map(x => [x.id, x.name, x.enabled, x.groupId]),
+        grouping.groups.map(g => [g.id, g.name, g.order, g.defaultOpen, g.collapsed]),
         regex.map(x => [x.type, x.id, x.name, x.enabled]),
         tab === 'regex' ? regexGroupFingerprint() : null,
         tab, filter,
@@ -1085,6 +1122,12 @@ function build() {
         event_types?.CHARACTER_EDITED, event_types?.CHATCOMPLETION_MODEL_CHANGED,
     ].filter(Boolean);
     refreshEvents.forEach(type => eventSource.on(type, () => setTimeout(refreshIfChanged, 400)));
+    // Native TT click handlers update the PromptManager order before bubbling here.
+    document.addEventListener('click', e => {
+        if (open && !working && e.target?.closest?.('#completion_prompt_manager_list .prompt-manager-toggle-action')) {
+            queueMicrotask(refreshIfChanged);
+        }
+    });
     setInterval(refreshIfChanged, 1600);
     mountSettingsPanel();
     watchExtensionManager();
