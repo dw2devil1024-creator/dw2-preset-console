@@ -19,12 +19,11 @@ import {
     isScopedScriptsAllowed,
     isPresetScriptsAllowed,
 } from '../../regex/engine.js';
-import { getRegexRefreshCoordinator } from '../../../tauri/perf/regex-refresh-coordinator.js';
 
 const NS = 'dw2pc';
 const ROOT_ID = 'dw2-preset-console';
 const SETTINGS_ID = 'dw2-preset-console-settings';
-const VERSION = '0.4.12';
+const VERSION = '0.4.13';
 const STORAGE_KEY = 'dw2.preset.console.v2';
 const CATEGORIES = [
     { id: 'quick', label: '快捷' },
@@ -258,6 +257,36 @@ async function togglePrompt(item) {
     catch (error) { toast(String(error.message || error), 'error'); render(); }
 }
 
+// TT 2.4.0 no longer exposes the old tauri/perf/regex-refresh-coordinator.js.
+ // Match the native regex editor's chat refresh path without statically importing
+ // a private TT module that may be removed in another client version.
+let regexRefreshTimer = null;
+function requestRegexChatRefreshCompat() {
+    clearTimeout(regexRefreshTimer);
+    regexRefreshTimer = setTimeout(async () => {
+        regexRefreshTimer = null;
+        try {
+            const host = await import('../../../../script.js');
+            if (typeof host.refreshChatContent !== 'function') {
+                toast('正则已保存；若旧楼层未更新，请重新进入当前聊天。');
+                return;
+            }
+            const chatId = typeof host.getCurrentChatId === 'function' ? host.getCurrentChatId() : null;
+            if (!chatId) return;
+            await host.refreshChatContent();
+            await eventSource.emit(event_types.CHAT_CHANGED, chatId);
+            if (this_chid !== undefined) {
+                await eventSource.emit(event_types.CHAT_LOADED, {
+                    detail: { id: this_chid, character: characters[Number(this_chid)] },
+                });
+            }
+        } catch (error) {
+            console.warn('[DW2 Preset Console] Regex display refresh failed:', error);
+            toast('正则已保存，但界面刷新失败。重新进入当前聊天即可更新显示。', 'warning');
+        }
+    }, 500);
+}
+
 async function toggleRegex(item) {
     if (working) return;
     working = true;
@@ -268,7 +297,7 @@ async function toggleRegex(item) {
             return { ...s, disabled: !item.script.disabled };
         });
         await saveScriptsByType(next, item.type);
-        getRegexRefreshCoordinator().requestFlush({ debounceMs: 500 });
+        requestRegexChatRefreshCompat();
     } catch (error) {
         toast('保存正则失败：' + (error.message || error), 'error');
     } finally {
