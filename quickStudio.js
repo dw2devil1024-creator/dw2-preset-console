@@ -1,5 +1,5 @@
 /**
- * DW2 Quick Studio / v0.4.2
+ * DW2 Quick Studio / v0.4.14
  * Compact real-state controls: two style selectors and two existing native
  * groups. This module never alters actual prompt content or BaiBai metadata.
  */
@@ -15,74 +15,74 @@ export function createQuickStudio(deps) {
         { id:'viewpoint', needle:'视角与落点｜沉浸镜头·小说叙事',
           name:'视角与落点', subtitle:'镜头 · 落点 · 对话 · 人称' },
     ];
+    // The two selectors operate on DIFFERENT physical folders.
+    const styleSources = [
+        { id: 'zhi', name: '文风 1 · 织界', description: '织界｜通用文风库' },
+        { id: 'puppy', name: '文风 2 · 小狗', description: '通用文学库' },
+    ];
     function groupBy(phrase) {
-        const groups=presetGroupData().groups;
-        const exact=groups.find(g=>String(g.name||'').includes(phrase));
-        if(exact)return exact;
-        // Older/newer 织界 editions use slightly different subtitles.
-        // Only accept unambiguous, unmistakable folder-name aliases.
-        const candidates=groups.filter(group=>{
-            const name=String(group.name||'').replace(/[\s｜|·・—_-]/g,'');
-            if(phrase==='通用文风库')return /通用文风|文风库/.test(name);
-            if(phrase.startsWith('写作指导'))return name.includes('写作指导');
-            if(phrase.startsWith('视角与落点'))return name.includes('视角与落点');
+        const groups = presetGroupData().groups || [];
+        const clean = value => String(value || '').replace(/[\s｜|·・—_-]/g, '');
+        const matches = groups.filter(g => {
+            const name = clean(g.name);
+            if (phrase === 'zhi') return name.includes('织界') && name.includes('通用文风库');
+            if (phrase === 'puppy') return name.includes('通用文学库') && !name.includes('织界');
+            if (phrase.startsWith('写作指导')) return name.includes('写作指导');
+            if (phrase.startsWith('视角与落点')) return name.includes('视角与落点');
             return false;
         });
-        return candidates.length===1?candidates[0]:null;
+        return matches.length === 1 ? matches[0] : null;
     }
-
-    function getStyles(items) {
-        const group = groupBy('通用文风库');
-        return group
-            ? items.filter(item => item.groupId === group.id && !item.marker
-                && !item.system && !isProtectedPrompt(item)
-                && !/──|↓|↑|最多选两文风|自定义文风区|仅单开不配其他|^😈\s*♫/.test(item.name))
+    function getStyles(items, sourceId = 'zhi') {
+        const group = groupBy(sourceId);
+        return group ? items.filter(item => item.groupId === group.id
+            && !item.marker && !item.system && !isProtectedPrompt(item)
+            && !/──|↓|↑|文风选择|自定义文风区|仅单开不配其他|^😈\s*♫|^★/.test(item.name))
             : [];
     }
-    function activeSlots(styles, prefs = presetSettings()) {
-        const valid = new Set(styles.map(x=>x.id));
+    function stylesFor(items) {
+        return Object.fromEntries(styleSources.map(s => [s.id, getStyles(items, s.id)]));
+    }
+    function activeSlots(libraries, prefs = presetSettings()) {
         const old = Array.isArray(prefs.styleSlots) ? prefs.styleSlots : [];
-        const slots=[0,1].map(i=>valid.has(old[i]) && styles.some(x=>x.id===old[i]&&x.enabled) ? old[i] : '');
-        const seen=new Set(slots.filter(Boolean));
-        for(const style of styles) {
-            if (!style.enabled || seen.has(style.id)) continue;
-            const empty = slots.indexOf('');
-            if (empty<0) break;
-            slots[empty]=style.id;seen.add(style.id);
-        }
-        if(JSON.stringify(prefs.styleSlots)!==JSON.stringify(slots)) {
-            prefs.styleSlots=slots;savePreferences();
+        const slots = styleSources.map((source, index) => {
+            const list = libraries[source.id] || [];
+            const chosen = list.find(x => x.id === old[index] && x.enabled);
+            return chosen?.id || list.find(x => x.enabled)?.id || '';
+        });
+        if (JSON.stringify(prefs.styleSlots) !== JSON.stringify(slots)) {
+            prefs.styleSlots = slots;
+            savePreferences();
         }
         return slots;
     }
-    async function setSlot(slotIndex,nextId) {
-        const styles=getStyles(promptItems()), prefs=presetSettings();
-        const prev=activeSlots(styles,prefs), previousId=prev[slotIndex];
-        const other=prev[1-slotIndex];
-        if(nextId&&!styles.some(x=>x.id===nextId)) {
-            toast('选中的文风已不存在，请先刷新。','warning');redraw();return;
+    async function setSlot(index, nextId) {
+        const source = styleSources[index];
+        const library = getStyles(promptItems(), source.id);
+        const prefs = presetSettings();
+        const previous = activeSlots(stylesFor(promptItems()), prefs);
+        if (nextId && !library.some(x => x.id === nextId)) {
+            toast('所选文风不属于' + source.description + '，请刷新。', 'warning');
+            redraw(); return;
         }
-        if(nextId && nextId===other) {
-            toast('这个文风已在另一个框里，请换一个。','warning');redraw();return;
-        }
-        if(previousId===nextId)return;
-        const changes=[];
-        const old=styles.find(x=>x.id===previousId);
-        const next=styles.find(x=>x.id===nextId);
-        if(old?.enabled && previousId!==other)changes.push({id:old.id,enabled:false});
-        if(next && !next.enabled)changes.push({id:next.id,enabled:true});
-        prefs.styleSlots=[...prev];
-        prefs.styleSlots[slotIndex]=nextId;
+        const changes = library.filter(x => x.enabled && x.id !== nextId)
+            .map(x => ({ id: x.id, enabled: false }));
+        const next = library.find(x => x.id === nextId);
+        if (next && !next.enabled) changes.push({ id: next.id, enabled: true });
+        prefs.styleSlots = [...previous];
+        prefs.styleSlots[index] = nextId;
         savePreferences();
         try {
-            if(changes.length && !await setPromptStates(changes)) {
-                prefs.styleSlots=prev;savePreferences();redraw();
-            } else if(!changes.length) redraw();
-        } catch(e) {
-            prefs.styleSlots=prev;savePreferences();
-            toast('文风切换失败：'+(e.message||e),'error');redraw();
+            if (changes.length && !await setPromptStates(changes)) {
+                prefs.styleSlots = previous; savePreferences(); redraw();
+            } else if (!changes.length) redraw();
+        } catch (error) {
+            prefs.styleSlots = previous; savePreferences();
+            toast('文风切换失败：' + (error.message || error), 'error');
+            redraw();
         }
     }
+
     function showGroupInAll(group) {
         if(!group)return;
         presetSettings().groupCollapsed[group.id]=false;
@@ -97,57 +97,73 @@ export function createQuickStudio(deps) {
     function styleLabel(name) {
         return String(name).replace(/^😈\s*/,'').replace(/^[🎵🎶🍧📀💌♥︎\s]+/u,'').trim();
     }
-    function addOptions(select,styles,slots,index) {
-        const q=filter.toLocaleLowerCase();
+    function addOptions(select, styles, selectedId) {
+        const query = filter.toLocaleLowerCase();
         select.replaceChildren();
-        const none=node('option','','暂不选择');none.value='';select.append(none);
-        for(const item of styles) {
-            if(q && !item.name.toLocaleLowerCase().includes(q) && !slots.includes(item.id))continue;
-            const option=node('option','',styleLabel(item.name));
-            option.value=item.id;
-            option.disabled=item.id===slots[1-index];
+        const none = node('option', '', '暂不选择');
+        none.value = '';
+        select.append(none);
+        for (const item of styles) {
+            if (query && !item.name.toLocaleLowerCase().includes(query)
+                && item.id !== selectedId) continue;
+            const option = node('option', '', styleLabel(item.name));
+            option.value = item.id;
             select.append(option);
         }
-        select.value=slots[index]||'';
+        select.value = selectedId || '';
     }
-    function styleSelectors(container,items) {
-        const group=groupBy('通用文风库');
-        const box=node('section','q-card');
-        box.append(node('div','q-title','文风选择'));
-        
-        if(!group) {
-            box.append(node('p','q-warning','未读取到通用文风库，请从「全部」检查。'));
-            container.append(box);return;
-        }
-        const styles=getStyles(items), slots=activeSlots(styles);
-        const enabledCount=styles.filter(x=>x.enabled).length;
-        box.append(node('div','q-meta',styles.length+' 可选  ·  '+enabledCount+' 启用'));
-        const search=node('input','q-search');search.type='search';
-        search.placeholder='搜索文风…';
-        search.value=filter;
-        const selectBoxes=[];
-        const fields=node('div','q-style-fields');
-        for(let idx=0;idx<2;idx++) {
-            const row=node('div','q-field');
-            const label=node('label','q-label','文风 '+(idx+1));
-            const select=node('select','q-select');
-            select.setAttribute('aria-label','选择第 '+(idx+1)+' 个文风');
-            addOptions(select,styles,slots,idx);
-            select.addEventListener('change',()=>void setSlot(idx,select.value));
-            selectBoxes.push(select);
-            row.append(label,select);fields.append(row);
-        }
-        search.addEventListener('input',()=>{
-            filter=search.value.trim();
-            const current=getStyles(promptItems()), selections=activeSlots(current);
-            selectBoxes.forEach((s,i)=>addOptions(s,current,selections,i));
+    function styleSelectors(container, items) {
+        const box = node('section', 'q-card');
+        box.append(node('div', 'q-title', '文风选择'));
+        const libraries = stylesFor(items);
+        const slots = activeSlots(libraries);
+        const meta = styleSources.map(source => {
+            const options = libraries[source.id];
+            return source.name + ' ' + options.length + ' 可选 · ' +
+                options.filter(x => x.enabled).length + ' 启用';
         });
-        box.append(search,fields);
-        if(enabledCount>2)box.append(node('p','q-warning',
-            '当前有 '+enabledCount+' 个文风开启，超过双槽数量。插件会保留额外文风，请在原分组核对。'));
-        box.append(button('全部文风 ↗','q-jump',()=>showGroupInAll(group)));
+        box.append(node('div', 'q-meta', meta.join('  ｜  ')));
+        const search = node('input', 'q-search');
+        search.type = 'search';
+        search.placeholder = '搜索两个文风库…';
+        search.value = filter;
+        const selects = [];
+        const fields = node('div', 'q-style-fields');
+        styleSources.forEach((source, index) => {
+            const group = groupBy(source.id);
+            const row = node('div', 'q-field');
+            const label = node('label', 'q-label', source.name);
+            const select = node('select', 'q-select');
+            select.setAttribute('aria-label', source.name);
+            select.disabled = !group;
+            addOptions(select, libraries[source.id], slots[index]);
+            select.addEventListener('change', () => void setSlot(index, select.value));
+            selects.push(select);
+            row.append(label, select);
+            fields.append(row);
+            if (!group) box.append(node('p', 'q-warning',
+                '未找到「' + source.description + '」；请检查当前预设的分组。'));
+        });
+        search.addEventListener('input', () => {
+            filter = search.value.trim();
+            const fresh = stylesFor(promptItems());
+            const selected = activeSlots(fresh);
+            selects.forEach((select, index) =>
+                addOptions(select, fresh[styleSources[index].id], selected[index]));
+        });
+        box.append(search, fields);
+        styleSources.forEach(source => {
+            const group = groupBy(source.id);
+            const enabled = libraries[source.id].filter(x => x.enabled).length;
+            if (enabled > 1) box.append(node('p', 'q-warning',
+                '「' + source.description + '」已有 ' + enabled +
+                ' 条文风开启，切换该槽会关闭本库的其他文风。'));
+            if (group) box.append(button(source.description + ' ↗',
+                'q-jump', () => showGroupInAll(group)));
+        });
         container.append(box);
     }
+
     function nativeGroup(container,items,def) {
         const group=groupBy(def.needle);
         const outer=node('section','q-card');
@@ -180,8 +196,8 @@ export function createQuickStudio(deps) {
             listArea.append(node('div','q-warning','预设管理器还没有就绪，请选择当前预设后刷新。'));
             return;
         }
-        if(!groupBy('通用文风库') && !folderSpecs.some(s=>groupBy(s.needle))) {
-            listArea.append(node('div','q-warning','暂未读到快捷页需要的文风／写作指导分组。请检查资源库的提示词分组是否启用，或等待预设加载；不需要移动条目来刷新。'));
+        if(!groupBy('zhi') && !groupBy('puppy') && !folderSpecs.some(s=>groupBy(s.needle))) {
+            listArea.append(node('div','q-warning','暂未读到快捷页需要的文风／写作指导分组。请检查当前预设自带分组或资源库分组是否已加载。'));
             listArea.append(button('打开全部','q-jump',()=>goToTab('all')));
             return;
         }

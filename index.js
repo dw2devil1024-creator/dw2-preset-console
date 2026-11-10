@@ -23,7 +23,7 @@ import {
 const NS = 'dw2pc';
 const ROOT_ID = 'dw2-preset-console';
 const SETTINGS_ID = 'dw2-preset-console-settings';
-const VERSION = '0.4.13';
+const VERSION = '0.4.14';
 const STORAGE_KEY = 'dw2.preset.console.v2';
 const CATEGORIES = [
     { id: 'quick', label: '快捷' },
@@ -147,10 +147,45 @@ function resourceLibraryPromptGroups() {
     }
 }
 
+function embeddedPresetPromptGroups() {
+    // When DW2's live prompt folders are disabled, read the selected preset's
+    // own portable BaiBai grouping. Never use a previous preset's cached data.
+    try {
+        const manager = getPresetManager('openai');
+        const name = manager?.getSelectedPresetName?.();
+        if (!name || name !== getCurrentPresetName()) return null;
+        const preset = manager.getCompletionPresetByName?.(name);
+        const raw = preset?.extensions?.baibaiToolkit?.presetPromptGroups
+            ?? manager.readPresetExtensionField?.({ name, path: 'baibaiToolkit.presetPromptGroups' });
+        if (!raw || !Array.isArray(raw.groups) || !raw.prompts || typeof raw.prompts !== 'object') return null;
+        const valid = new Set((promptManager?.serviceSettings?.prompts || [])
+            .map(p => p?.identifier).filter(Boolean));
+        const groups = [], known = new Set();
+        for (const group of raw.groups) {
+            const id = String(group?.id || '').trim(), label = String(group?.name || '').trim();
+            if (!id || !label || known.has(id)) continue;
+            known.add(id);
+            groups.push({ id, name: label, order: Number(group.order) || groups.length,
+                collapsed: group.collapsed === true, defaultOpen: group.collapsed !== true });
+        }
+        const assigned = {};
+        for (const [id, entry] of Object.entries(raw.prompts)) {
+            const groupId = String(entry?.groupId || '');
+            if (valid.has(id) && known.has(groupId)) assigned[id] = { groupId };
+        }
+        return groups.length ? { groups, assigned } : null;
+    } catch (error) {
+        console.debug('[DW2 Control] Embedded preset groups unavailable', error);
+        return null;
+    }
+}
+
 function presetGroupData() {
-    // Never resurrect legacy BaiBai groups or old fixed ZHIJIE mappings.
-    // Only read live DW2 Resource Library grouping for this preset.
-    return resourceLibraryPromptGroups() || { groups: [], assigned: {} };
+    // The active DW2 Resource Library remains authoritative when enabled,
+    // including intentionally empty folders. Otherwise use THIS preset's
+    // portable grouping, not stale cross-preset localStorage mappings.
+    return resourceLibraryPromptGroups() || embeddedPresetPromptGroups()
+        || { groups: [], assigned: {} };
 }
 
 function isProtectedPrompt(item) {
@@ -316,29 +351,43 @@ function toggleFavorite(item) {
 }
 
 function getModePrompts() {
-    const settings = presetSettings();
     const items = promptItems();
-    const world = items.find(item => item.key === settings.modes.world) ||
-        items.find(item => item.name.includes('织界｜世界演绎者'));
-    const novel = items.find(item => item.key === settings.modes.novel) ||
-        items.find(item => item.name.includes('墨团子 · 原创小说家'));
-    const addon = items.find(item => item.name.includes('墨团子｜小说叙事增强'));
-    return { world, novel, addon };
+    const settings = presetSettings();
+    const byId = new Map(items.map(item => [item.id, item]));
+    const world = items.find(item => item.key === settings.modes.world
+        && item.name.includes('织界')) ||
+        items.find(item => item.name === '🌙 织界｜世界演绎者') ||
+        items.find(item => /织界.*世界演绎者/.test(item.name)
+            && !item.name.includes('副本'));
+    // These are three REAL prompt-order entries, not a cosmetic folder switch.
+    // Do not toggle optional dog worldview items or '给小狗的忠告'.
+    const puppy = [
+        byId.get('main'),
+        byId.get('nsfw'),
+        items.find(item => item.name === '狗的职责'),
+    ].filter(Boolean);
+    return { world, puppy, puppyComplete: puppy.length === 3 };
 }
 
 async function activateMode(mode) {
-    const { world, novel } = getModePrompts();
-    const own = mode === 'world' ? world : novel;
-    const other = mode === 'world' ? novel : world;
-    if (!own || !other || own.id === other.id) {
-        toast('请先绑定两条真实的身份核心条目', 'warning');
+    const { world, puppy, puppyComplete } = getModePrompts();
+    if (!world || !puppyComplete || puppy.some(item => item.id === world.id)) {
+        toast('无法完整识别小狗三条核心和织界身份，请检查当前预设。', 'warning');
+        return;
+    }
+    const dogOn = mode === 'puppy';
+    const changes = [
+        ...puppy.map(item => ({ id: item.id, enabled: dogOn })),
+        { id: world.id, enabled: !dogOn },
+    ].filter(change => promptItems().some(item =>
+        item.id === change.id && item.enabled !== change.enabled));
+    if (!changes.length) {
+        toast('当前已经是' + (dogOn ? '小狗' : '织界') + '模式。');
         return;
     }
     try {
-        if (await setPromptStates([
-            { id: own.id, enabled: true },
-            { id: other.id, enabled: false },
-        ])) toast('已切换到' + (mode === 'novel' ? '墨团子·小说家' : '织界·世界演绎者') + '身份', 'success');
+        if (await setPromptStates(changes))
+            toast('已切换到' + (dogOn ? '小狗之神' : '织界·世界演绎者') + '模式', 'success');
     } catch (error) {
         toast(String(error.message || error), 'error');
         render();
@@ -523,64 +572,108 @@ function modeSelector(mode, label, items) {
 
 function showModes() {
     const items = promptItems();
-    listArea.append(heading('双模式快捷切换'));
-    const help = node('p', 'help',
-        '你的《织界》设定为「身份二选一，小说叙事可叠加」。身份按钮仅切换织界与墨团子，不会关闭独立的小说叙事增强或修改变量初始化。');
-    listArea.append(help);
-    if (!items.length) { listArea.append(empty('当前还没有可绑定的预设条目。')); return; }
-    const { world, novel, addon } = getModePrompts();
-    if (!world || !novel) {
-        listArea.append(modeSelector('world', '世界演绎身份', items));
-        listArea.append(modeSelector('novel', '小说家身份', items));
-    } else {
-        listArea.append(node('p', 'help', '已识别身份条目：' + world.name + ' / ' + novel.name));
+    listArea.append(heading('小狗 / 织界 · 身份双模式'));
+    listArea.append(node('p', 'help',
+        '小狗模式启用「汪🐶」「你好，小狗」「狗的职责」，关闭织界身份；织界模式反向切换。备用规则、文风、状态栏和正则一律不碰。'));
+    if (!items.length) {
+        listArea.append(empty('当前还没有可绑定的预设条目。'));
+        return;
     }
+    const { world, puppy, puppyComplete } = getModePrompts();
+    if (!world) listArea.append(modeSelector('world', '织界身份核心', items));
+    if (!puppyComplete) listArea.append(node('p', 'help',
+        '缺少小狗原生身份条目（main / nsfw / 狗的职责），请确认当前使用小狗融合版。'));
+    const puppyActive = puppyComplete && puppy.every(x => x.enabled) && !world?.enabled;
+    const worldActive = !!world?.enabled && puppy.every(x => !x.enabled);
+    listArea.append(node('p', 'help', '当前模式：' +
+        (puppyActive ? '🐶 小狗之神' : worldActive ? '🌙 织界' : '手动混合状态（未自动修改）')));
     const controls = node('div', 'mode-actions');
-    controls.append(
-        button('织界 · 世界演绎', 'mode-button', () => activateMode('world')),
-        button('墨团子 · 小说家', 'mode-button', () => activateMode('novel'))
-    );
+    const dogButton = button('🐶 小狗之神', 'mode-button', () => activateMode('puppy'));
+    const worldButton = button('🌙 织界 · 世界演绎', 'mode-button', () => activateMode('world'));
+    dogButton.disabled = worldButton.disabled = !world || !puppyComplete;
+    dogButton.setAttribute('aria-pressed', String(puppyActive));
+    worldButton.setAttribute('aria-pressed', String(worldActive));
+    controls.append(dogButton, worldButton);
     listArea.append(controls);
-    if (addon) {
-        listArea.append(heading('小说叙事增强 · 可叠加'));
-        listArea.append(itemRow(addon, true));
-        listArea.append(node('p', 'help', '这条是独立可选项，即使使用「织界」身份也能开启，不与身份开关互斥。'));
-    }
-    listArea.append(node('p', 'help', '不同版本可能有不同名称；匹配不到时可手动绑定。切换身份后仍建议检查开关状态。'));
+    listArea.append(node('p', 'help',
+        '切换只操作四条身份提示词。小狗其他备用条目和「给小狗的忠告」保持你原来的开关状态。'));
 }
 
-// Read-only bridge to BaiBai Toolkit's custom regex folders.
+// Read-only bridges to whichever regex folder organizer is currently active.
 function getCustomRegexGroups(type) {
-    const api = getCurrentPresetAPI(), preset = getCurrentPresetName();
-    const key = type === SCRIPT_TYPES.GLOBAL ? 'global'
-        : type === SCRIPT_TYPES.SCOPED ? 'scoped:'+(characters?.[this_chid]?.avatar||'none')
-        : 'preset:'+(api||'unknown')+':'+(preset||'unknown');
-    let state = extension_settings?.baiBaiToolkit?.regexListGroups?.scopes?.[key];
-    if ((!state || !Array.isArray(state.groups)) && type === SCRIPT_TYPES.PRESET) {
-        try {
-            const portable = getPresetManager(api)?.readPresetExtensionField({
-                name: preset, path: 'baibaiToolkit.regexGroups',
-            });
-            if (Number(portable?.version) === 1) state = portable;
-        } catch (e) { console.debug('[DW2 Control] Portable regex group unavailable',e); }
+    const api = getCurrentPresetAPI();
+    const selected = getPresetManager('openai')?.getSelectedPresetName?.() || getCurrentPresetName();
+    const preset = getCurrentPresetName();
+    const scopeId = String(this_chid ?? '');
+    const resourceKey = type === SCRIPT_TYPES.GLOBAL ? 'global'
+        : type === SCRIPT_TYPES.SCOPED ? 'scoped:' + scopeId
+        : 'preset:' + selected;
+    const legacyKey = type === SCRIPT_TYPES.GLOBAL ? 'global'
+        : type === SCRIPT_TYPES.SCOPED
+            ? 'scoped:' + (characters?.[this_chid]?.avatar || 'none')
+            : 'preset:' + (api || 'unknown') + ':' + (preset || 'unknown');
+    const resource = globalThis.SillyTavern?.getContext?.()?.extensionSettings
+        ?.dw2ResourceLibrary ?? extension_settings?.dw2ResourceLibrary;
+    let state = null, key = '';
+    let source = '';
+    // DW2 Resource Library uses groups:[{id,name}] + entries:{scriptId:groupId}.
+    // Match the exact TT scope key (preset:name / scoped:characterId).
+    if (resource?.regexFoldersEnabled === true && resourceKey !== 'scoped:'
+        && resourceKey !== 'preset:') {
+        const record = resource.regexFolders?.[resourceKey];
+        if (record && Array.isArray(record.groups) && record.entries
+            && typeof record.entries === 'object') {
+            state = record; key = 'dw2rl:' + resourceKey; source = 'resource';
+        }
     }
-    if (!Array.isArray(state?.groups) || !state?.scripts || typeof state.scripts !== 'object') return null;
-    const groups = state.groups.filter(x=>x&&x.id)
-        .sort((a,b)=>(Number(a.order)||0)-(Number(b.order)||0))
-        .map(x=>({id:String(x.id),name:String(x.name||'未命名分组'),collapsed:!!x.collapsed}));
-    const groupIds = new Set(groups.map(x=>x.id));
-    return {
-        key, groups:[...groups,{
-            id:'__ungrouped',
-            name:String(state.ungrouped?.name||'默认分组'),
-            collapsed:!!state.ungrouped?.collapsed,
-        }],
-        groupFor(id) {
-            const assigned = state.scripts[id]?.groupId;
+    if (!state) {
+        const legacy = extension_settings?.baiBaiToolkit?.regexListGroups?.scopes?.[legacyKey]
+            ?? extension_settings?.baibaiToolkit?.regexListGroups?.scopes?.[legacyKey];
+        if (legacy && Array.isArray(legacy.groups)) {
+            state = legacy; key = 'baibai:' + legacyKey; source = 'legacy';
+        }
+    }
+    if (!state && type === SCRIPT_TYPES.PRESET && selected === preset) {
+        try {
+            const manager = getPresetManager(api);
+            const portable = manager?.getCompletionPresetByName?.(preset)
+                ?.extensions?.baibaiToolkit?.regexGroups
+                ?? manager?.readPresetExtensionField?.({
+                    name: preset, path: 'baibaiToolkit.regexGroups',
+                });
+            if (Number(portable?.version) === 1 && Array.isArray(portable?.groups)) {
+                state = portable; key = 'portable:' + legacyKey; source = 'portable';
+            }
+        } catch (error) {
+            console.debug('[DW2 Control] Portable regex group unavailable', error);
+        }
+    }
+    if (!state || !Array.isArray(state.groups)) return null;
+    const groups = state.groups.filter(x => x && x.id).slice().sort((a, b) =>
+        (Number(a.order) || 0) - (Number(b.order) || 0))
+        .map(x => ({ id: String(x.id), name: String(x.name || '未命名分组'),
+            collapsed: !!x.collapsed }));
+    const groupIds = new Set(groups.map(x => x.id));
+    const groupFor = source === 'resource'
+        ? id => {
+            const assigned = String(state.entries?.[id] || '');
             return groupIds.has(assigned) ? assigned : '__ungrouped';
-        },
+        }
+        : id => {
+            const assigned = String(state.scripts?.[id]?.groupId || '');
+            return groupIds.has(assigned) ? assigned : '__ungrouped';
+        };
+    return {
+        key,
+        groups: [...groups, {
+            id: '__ungrouped',
+            name: String(state.ungrouped?.name || '未分组'),
+            collapsed: !!state.ungrouped?.collapsed,
+        }],
+        groupFor,
     };
 }
+
 function regexGroupFingerprint() {
     return [SCRIPT_TYPES.GLOBAL, SCRIPT_TYPES.PRESET, SCRIPT_TYPES.SCOPED].map(type=>{
         const data = getCustomRegexGroups(type);
