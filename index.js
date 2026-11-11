@@ -23,13 +23,13 @@ import {
 const NS = 'dw2pc';
 const ROOT_ID = 'dw2-preset-console';
 const SETTINGS_ID = 'dw2-preset-console-settings';
-const VERSION = '0.4.14';
+const VERSION = '0.4.15';
 const STORAGE_KEY = 'dw2.preset.console.v2';
 const CATEGORIES = [
     { id: 'quick', label: '快捷' },
     { id: 'all', label: '全部' },
     { id: 'favs', label: '常用' },
-    { id: 'modes', label: '模式' },
+    { id: 'modes', label: '内核' },
     { id: 'regex', label: '正则' },
 ];
 let prefs = loadPreferences();
@@ -372,7 +372,7 @@ function getModePrompts() {
 async function activateMode(mode) {
     const { world, puppy, puppyComplete } = getModePrompts();
     if (!world || !puppyComplete || puppy.some(item => item.id === world.id)) {
-        toast('无法完整识别小狗三条核心和织界身份，请检查当前预设。', 'warning');
+        toast('缺少叙事内核所需的身份提示词，请检查当前预设。', 'warning');
         return;
     }
     const dogOn = mode === 'puppy';
@@ -382,12 +382,12 @@ async function activateMode(mode) {
     ].filter(change => promptItems().some(item =>
         item.id === change.id && item.enabled !== change.enabled));
     if (!changes.length) {
-        toast('当前已经是' + (dogOn ? '小狗' : '织界') + '模式。');
+        toast('当前已经是「' + (dogOn ? '灵动叙事' : '沉浸演绎') + '」。');
         return;
     }
     try {
         if (await setPromptStates(changes))
-            toast('已切换到' + (dogOn ? '小狗之神' : '织界·世界演绎者') + '模式', 'success');
+            toast('已切换至「' + (dogOn ? '灵动叙事' : '沉浸演绎') + '」', 'success');
     } catch (error) {
         toast(String(error.message || error), 'error');
         render();
@@ -572,31 +572,31 @@ function modeSelector(mode, label, items) {
 
 function showModes() {
     const items = promptItems();
-    listArea.append(heading('小狗 / 织界 · 身份双模式'));
+    listArea.append(heading('叙事内核 · 双模式'));
     listArea.append(node('p', 'help',
-        '小狗模式启用「汪🐶」「你好，小狗」「狗的职责」，关闭织界身份；织界模式反向切换。备用规则、文风、状态栏和正则一律不碰。'));
+        '灵动叙事与沉浸演绎使用两组独立身份核心。切换仅调整身份提示词，备用规则、文风、状态栏及正则均保持原样。'));
     if (!items.length) {
         listArea.append(empty('当前还没有可绑定的预设条目。'));
         return;
     }
     const { world, puppy, puppyComplete } = getModePrompts();
-    if (!world) listArea.append(modeSelector('world', '织界身份核心', items));
+    if (!world) listArea.append(modeSelector('world', '沉浸演绎 · 身份核心', items));
     if (!puppyComplete) listArea.append(node('p', 'help',
-        '缺少小狗原生身份条目（main / nsfw / 狗的职责），请确认当前使用小狗融合版。'));
+        '缺少「灵动叙事」所需的三个身份条目，请检查当前预设是否导入完整。'));
     const puppyActive = puppyComplete && puppy.every(x => x.enabled) && !world?.enabled;
     const worldActive = !!world?.enabled && puppy.every(x => !x.enabled);
-    listArea.append(node('p', 'help', '当前模式：' +
-        (puppyActive ? '🐶 小狗之神' : worldActive ? '🌙 织界' : '手动混合状态（未自动修改）')));
+    listArea.append(node('p', 'help', '当前内核：' +
+        (puppyActive ? '✧ 灵动叙事' : worldActive ? '☾ 沉浸演绎' : '手动混合状态（未自动修改）')));
     const controls = node('div', 'mode-actions');
-    const dogButton = button('🐶 小狗之神', 'mode-button', () => activateMode('puppy'));
-    const worldButton = button('🌙 织界 · 世界演绎', 'mode-button', () => activateMode('world'));
+    const dogButton = button('✧ 灵动叙事', 'mode-button', () => activateMode('puppy'));
+    const worldButton = button('☾ 沉浸演绎', 'mode-button', () => activateMode('world'));
     dogButton.disabled = worldButton.disabled = !world || !puppyComplete;
     dogButton.setAttribute('aria-pressed', String(puppyActive));
     worldButton.setAttribute('aria-pressed', String(worldActive));
     controls.append(dogButton, worldButton);
     listArea.append(controls);
     listArea.append(node('p', 'help',
-        '切换只操作四条身份提示词。小狗其他备用条目和「给小狗的忠告」保持你原来的开关状态。'));
+        '仅切换四条身份提示词；其余备用条目均保留原有启用状态，不会修改任何文风或正则。'));
 }
 
 // Read-only bridges to whichever regex folder organizer is currently active.
