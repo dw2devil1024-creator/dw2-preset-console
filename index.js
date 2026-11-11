@@ -23,7 +23,7 @@ import {
 const NS = 'dw2pc';
 const ROOT_ID = 'dw2-preset-console';
 const SETTINGS_ID = 'dw2-preset-console-settings';
-const VERSION = '0.4.15';
+const VERSION = '0.4.16';
 const STORAGE_KEY = 'dw2.preset.console.v2';
 const CATEGORIES = [
     { id: 'quick', label: '快捷' },
@@ -616,9 +616,21 @@ function getCustomRegexGroups(type) {
         ?.dw2ResourceLibrary ?? extension_settings?.dw2ResourceLibrary;
     let state = null, key = '';
     let source = '';
-    // DW2 Resource Library uses groups:[{id,name}] + entries:{scriptId:groupId}.
-    // Match the exact TT scope key (preset:name / scoped:characterId).
-    if (resource?.regexFoldersEnabled === true && resourceKey !== 'scoped:'
+    // V0.1.43+ DW2 Resource Library supplies the active, stable scoped key.
+    // A character-list index is not durable across different chat archives.
+    // Prefer the live read-only bridge, including intentionally empty groups.
+    const scopeType = type === SCRIPT_TYPES.GLOBAL ? 'global'
+        : type === SCRIPT_TYPES.SCOPED ? 'scoped' : 'preset';
+    const live = globalThis.DW2ResourceLibrary?.getRegexFolderSnapshot?.(scopeType);
+    if (resource?.regexFoldersEnabled === true && live?.key &&
+        Array.isArray(live.groups) && live.entries &&
+        typeof live.entries === 'object') {
+        state = { groups: live.groups, entries: live.entries };
+        key = 'dw2rl:' + live.key;
+        source = 'resource';
+    }
+    // Legacy fallback when the Resource Library extension is older than 0.1.43.
+    if (!state && resource?.regexFoldersEnabled === true && resourceKey !== 'scoped:'
         && resourceKey !== 'preset:') {
         const record = resource.regexFolders?.[resourceKey];
         if (record && Array.isArray(record.groups) && record.entries
