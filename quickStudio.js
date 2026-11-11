@@ -1,5 +1,5 @@
 /**
- * DW2 Quick Studio / v0.4.14
+ * DW2 Quick Studio / v0.4.15
  * Compact real-state controls: two style selectors and two existing native
  * groups. This module never alters actual prompt content or BaiBai metadata.
  */
@@ -17,8 +17,8 @@ export function createQuickStudio(deps) {
     ];
     // The two selectors operate on DIFFERENT physical folders.
     const styleSources = [
-        { id: 'zhi', name: '文风 1 · 织界', description: '织界｜通用文风库' },
-        { id: 'puppy', name: '文风 2 · 小狗', description: '通用文学库' },
+        { id: 'zhi', name: '文风 1 · 织界·原生', description: '织界｜通用文风库' },
+        { id: 'puppy', name: '文风 2 · 织界·文学', description: '通用文学库' },
     ];
     function groupBy(phrase) {
         const groups = presetGroupData().groups || [];
