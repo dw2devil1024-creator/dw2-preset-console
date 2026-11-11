@@ -23,7 +23,7 @@ import {
 const NS = 'dw2pc';
 const ROOT_ID = 'dw2-preset-console';
 const SETTINGS_ID = 'dw2-preset-console-settings';
-const VERSION = '0.4.16';
+const VERSION = '0.4.17';
 const STORAGE_KEY = 'dw2.preset.console.v2';
 const CATEGORIES = [
     { id: 'quick', label: '快捷' },
@@ -669,7 +669,12 @@ function getCustomRegexGroups(type) {
     const groupFor = source === 'resource'
         ? id => {
             const assigned = String(state.entries?.[id] || '');
-            return groupIds.has(assigned) ? assigned : '__ungrouped';
+            if (assigned === '__dw2_loose__') return '__ungrouped';
+            if (groupIds.has(assigned)) return assigned;
+            // Resource Library v0.1.45 uses implicit membership in its
+            // non-removable Default folder, without rewriting old metadata.
+            return groupIds.has('__dw2_default__')
+                ? '__dw2_default__' : '__ungrouped';
         }
         : id => {
             const assigned = String(state.scripts?.[id]?.groupId || '');
