@@ -684,7 +684,8 @@ function getCustomRegexGroups(type) {
         key,
         groups: [...groups, {
             id: '__ungrouped',
-            name: String(state.ungrouped?.name || '未分组'),
+            name: source === 'resource' && groupIds.has('__dw2_default__')
+                ? '独立散放' : String(state.ungrouped?.name || '未分组'),
             collapsed: !!state.ungrouped?.collapsed,
         }],
         groupFor,
